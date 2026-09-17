@@ -9,16 +9,16 @@ project(122-led-button)
 
 pico_sdk_init()
 
-add_executable(${PROJECT_NAME}
+add_executable(122-led-button
     ${CMAKE_CURRENT_SOURCE_DIR}/main.c
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(122-led-button
     pico_stdlib
 )
 
-pico_set_linker_script(${PROJECT_NAME}
+pico_set_linker_script(122-led-button
     ${CMAKE_CURRENT_SOURCE_DIR}/memmap_rp2040.ld
 )
 
-pico_add_extra_outputs(${PROJECT_NAME})
+pico_add_extra_outputs(122-led-button)
