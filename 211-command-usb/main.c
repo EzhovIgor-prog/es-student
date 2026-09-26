@@ -85,37 +85,6 @@ bool get_button_debounce(uint pin)
 }
 
 //=====================================================================
-/*void handle_command(const char *command)
-{
-    if (strcmp(command, "enable") == 0)
-    {
-        // включаем светодиод и сообщаем новое состояние
-        led_set(true);
-        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
-    }
-    else if (strcmp(command, "disable") == 0)
-    {
-        // выключаем светодиод и сообщаем новое состояние
-        led_set(false);
-        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
-    }
-    else if (strcmp(command, "info") == 0)
-    {
-        // печатаем паспорт устройства
-        device_info();
-    }
-    else if (strcmp(command, "version") == 0)
-    {
-        // печатаем строку журнала о версии прошивки
-        log_version();
-    }
-    else
-    {
-        LOG_ERR("unknown command: %s\n", command);
-    }
-}
-*/
-
 void handle_command(const char *command)
 {
     for (uint i = 0; i < COMMAND_COUNT; i++)
