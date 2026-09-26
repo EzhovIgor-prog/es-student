@@ -1,5 +1,5 @@
-# Проверка задания п2.1.1 на устройстве: посылает плате команды занятия
-# и записывает обмен в файл device-2-1-1.log.
+# Проверка задания п2.1.2 на устройстве: посылает плате команды занятия, включая проверочную ping,
+# и записывает обмен в файл device-2-1-2.log.
 
 import time
 from datetime import datetime
@@ -10,10 +10,10 @@ from serial.tools import list_ports
 VENDOR_ID = 0x2E8A
 PRODUCT_ID = 0x000A
 
-TASK = "2.1.1"
+TASK = "2.1.2"
 PROJECT = "211-command-usb"
-LOG_NAME = "device-2-1-1.log"
-COMMANDS = ["enable", "disable", "info", "nosuchcommand"]
+LOG_NAME = "device-2-1-2.log"
+COMMANDS = ["enable", "disable", "info", "ping", "nosuchcommand"]
 ANSWER_S = 2
 
 

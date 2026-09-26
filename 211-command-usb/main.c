@@ -8,6 +8,8 @@
 #include <string.h>
 
 
+typedef void (*command_handler_t)(void);
+
 const uint BUTTON_PIN = 15;
 const uint DEBOUNCE_MS = 20;
 
@@ -15,6 +17,64 @@ const uint DEBOUNCE_MS = 20;
 
 char line[LINE_SIZE];
 uint line_length = 0;
+
+
+
+
+
+
+void cmd_enable(void)
+{
+    // включаем светодиод и сообщаем новое состояние
+    led_set(true);
+    LOG_INF("led %s\n", led_is_on() ? "on" : "off");
+}
+
+void cmd_disable(void)
+{
+    // выключаем светодиод и сообщаем новое состояние
+     led_set(false);
+     LOG_INF("led %s\n", led_is_on() ? "on" : "off");
+}
+
+void cmd_info(void)
+{
+    // печатаем паспорт устройства
+    device_info();
+}
+
+void cmd_version(void)
+{
+    // печатаем строку журнала о версии прошивки
+    log_version();
+}
+
+void cmd_ping(void)
+{
+    printf("pong\n");
+}
+
+
+//=======================================================
+struct command_t
+{
+    const char *name;
+    command_handler_t handler;
+};
+
+
+
+//=======================================================
+const struct command_t commands[] = {
+    { "enable", cmd_enable },
+    { "disable", cmd_disable },
+    { "info", cmd_info },
+    { "version", cmd_version },
+    { "ping", cmd_ping },
+};
+
+#define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
+
 
 //=====================================================================
 bool get_button_debounce(uint pin)
@@ -25,34 +85,7 @@ bool get_button_debounce(uint pin)
 }
 
 //=====================================================================
-/*void handle_command(int command)
-{
-    if (command == 'e')
-    {
-        led_set(true);
-        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
-    }
-    else if (command == 'd')
-    {
-        led_set(false);
-        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
-    }
-    else if (command == 'v')
-    {
-        log_version();
-    }
-    else if (command == 'i')
-    {
-        device_info();
-    }
-    else
-    {
-        LOG_ERR("unknown command: %c\n", command);
-    }
-}
-*/
-
-void handle_command(const char *command)
+/*void handle_command(const char *command)
 {
     if (strcmp(command, "enable") == 0)
     {
@@ -81,6 +114,27 @@ void handle_command(const char *command)
         LOG_ERR("unknown command: %s\n", command);
     }
 }
+*/
+
+void handle_command(const char *command)
+{
+    for (uint i = 0; i < COMMAND_COUNT; i++)
+    {
+        if (strcmp(command, commands[i].name) == 0)
+        {
+            if (commands[i].handler != NULL)
+            {
+                commands[i].handler();
+            }
+
+            return;
+        }
+    }
+
+    LOG_ERR("unknown command: %s\n", command);
+}
+
+
 
 //====================================================================
 void read_line(void)
@@ -142,16 +196,8 @@ int main()
 
         previous = current;
 
-        //int command = getchar_timeout_us(0);
-
-        //if (command == PICO_ERROR_TIMEOUT)
-        //{
-        //    continue;
-        //}
-
         read_line();
 
-        //LOG_DBG("got %s\n", command);
-        //handle_command(command);
+        
     }
 }
