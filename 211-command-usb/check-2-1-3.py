@@ -1,5 +1,5 @@
-# Проверка задания п2.1.2 на устройстве: посылает плате команды занятия, включая проверочную ping,
-# и записывает обмен в файл device-2-1-2.log.
+# Проверка задания п2.1.3 на устройстве: спрашивает у платы карту памяти командой mem_info
+# и записывает обмен в файл device-2-1-3.log.
 
 import time
 from datetime import datetime
@@ -10,10 +10,10 @@ from serial.tools import list_ports
 VENDOR_ID = 0x2E8A
 PRODUCT_ID = 0x000A
 
-TASK = "2.1.2"
+TASK = "2.1.3"
 PROJECT = "211-command-usb"
-LOG_NAME = "device-2-1-2.log"
-COMMANDS = ["enable", "disable", "info", "ping", "nosuchcommand"]
+LOG_NAME = "device-2-1-3.log"
+COMMANDS = ["mem_info"]
 ANSWER_S = 2
 
 
