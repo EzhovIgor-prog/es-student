@@ -67,12 +67,11 @@
     void mem_info(void)
     {
         // шапка таблицы: область, начало, конец, размер
-        //printf("area       start      end        size\n");
+       
         printf("%-10s %-10s %-6s %8s\n", "area", "start", "end", "size");
 
         uint32_t    mem1 = XIP_BASE + PICO_FLASH_SIZE_BYTES;
-        // flash — XIP_BASE и PICO_FLASH_SIZE_BYTES
-        //rowint("flash",  XIP_BASE, (XIP_BASE + PICO_FLASH_SIZE_BYTES));
+       
         rowint("flash",  XIP_BASE, mem1);
 
         // sram — базовый адрес из SDK, размер из datasheet
@@ -141,10 +140,6 @@
         data_variable++;
         bss_variable++;
 
-      
-
-
-    //heap_variable = (uint32_t*)(malloc(sizeof(uint32_t)));
 
      // считаем вызов: data_variable и bss_variable на единицу больше
     // адреса функций со сброшенным признаком Thumb
@@ -184,12 +179,12 @@
     char_addr = (char*)DEVICE_BOARD;
     printf("DEVICE_BOARD    0x%08x %s\n", char_addr, DEVICE_BOARD);
 
-    //uint32_t *pTemp;
-    //pTemp = (uint32_t*) data_variable;
-    uint32_t *pTemp = &data_variable;
+
+     // data_variable  — адрес и значение, секция .data
+     uint32_t *pTemp = &data_variable;
     printf("data_variable   0x%08x %u\n", pTemp, *pTemp);
 
-    
+     // bss_variable   — адрес и значение, секция .bss  
     uint32_t *pTemp1 = &bss_variable;
     printf("bss_variable    0x%08x %u\n", pTemp1, *pTemp1);
 
@@ -204,14 +199,12 @@
             *heap_variable = 1951;
         }
 
+         // stack_variable — адрес и значение
+         // heap_variable  — адрес и значение
         printf("stack_variable   0x%08x %u\n", ptr2, stack_variable);
         printf("heap_variable    0x%08x %u\n", heap_variable, *heap_variable);
     
     
-    // data_variable  — адрес и значение, секция .data
-    // bss_variable   — адрес и значение, секция .bss
-    // stack_variable — адрес и значение
-    // heap_variable  — адрес и значение
 
     // возвращаем блок кучи
     free(heap_variable);

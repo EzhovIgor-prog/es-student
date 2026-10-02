@@ -71,13 +71,6 @@ void cmd_fw_info(void)
 
 
 
-//=======================================================
-//struct command_t
-//{
- //   const char *name;
- //   command_handler_t handler;
-//};
-
 
 
 //=======================================================
@@ -91,7 +84,6 @@ const struct command_t commands[] = {
     { "fw_info", cmd_fw_info },
 };
 
-//#define COMMAND_COUNT (sizeof(commands) / sizeof(commands[0]))
 const uint command_count = sizeof(commands) / sizeof(commands[0]);
 
 //=====================================================================
