@@ -150,25 +150,23 @@
     
     
     // main, fw_info  — адрес с признаком Thumb и два байта по сброшенному адресу
-    uintptr_t code_addr = (uintptr_t)main & ~(uintptr_t)1;  // адрес первой команды: младший разряд сброшен
-    uint16_t first = *(uint16_t *)code_addr;    // первая команда функции: 
-    printf("%-10s      0x%08x   0x%04x\n", "main",code_addr, first);
+    uint16_t *main_code = (uint16_t *)((uintptr_t)main & ~1u);
+        printf("%-10s      0x%08x   0x%04x\n", "main",main_code, *main_code);
 
     
-    code_addr = (uintptr_t)fw_info & ~(uintptr_t)1; // адрес первой команды: младший разряд сброшен
-    first = *(uint16_t *)code_addr; // первая команда функции: 
-    printf("%-10s      0x%08x   0x%04x\n", "fw_info", code_addr, first);
-
+       uint16_t *fw_info_code = (uint16_t *)((uintptr_t)fw_info & ~1u);
+    printf("%-10s      0x%08x   0x%04x\n", "fw_info", fw_info_code, *fw_info_code);
+            
     // commands       — адрес массива
-    code_addr = (uintptr_t)commands;
-    printf("%-10s      0x%08x\n", "commands", code_addr);
+       uint16_t *commands_code = (uint16_t *)((uintptr_t)commands);
+    printf("%-10s      0x%08x\n", "commands", commands_code);
 
-  
+    uint16_t *handler_code;
   // обработчики    — имя команды и адрес обработчика, строкой на команду
     for (uint i = 0; i < command_count; i++)
     {
-         code_addr = (uintptr_t)commands[i].handler & ~(uintptr_t)1;
-        printf("- %-10s    0x%08x\n", commands[i].name, (unsigned)code_addr );
+        handler_code = (uint16_t *)((uintptr_t)commands[i].handler & ~1u);
+             printf("- %-10s    0x%08x\n", commands[i].name, handler_code );
     }
     
     // константы      — адрес и значение строк паспорта из device.h
