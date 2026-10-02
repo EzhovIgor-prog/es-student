@@ -11,8 +11,9 @@
 
 static void row(const char *name, uintptr_t start, uintptr_t end);
 void mem_info(void);
+void fw_info(void);
 
-
-
+extern uint32_t data_variable;
+extern uint32_t bss_variable;
 
 
