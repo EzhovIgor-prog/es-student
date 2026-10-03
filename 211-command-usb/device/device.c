@@ -60,7 +60,7 @@ void dev_info(void)
            unsigned fields = sizeof(device_card.version) + sizeof(device_card.name) + sizeof(device_card.revision);
 
 
-        printf("fields %3u, of sizeof %3u, padding %3u\n",
+        printf("fields %2u, sizeof %2u, padding %2u\n",
            fields,
            temp_sizeof,
            temp_sizeof - fields);
