@@ -2,7 +2,7 @@
 #include "command.h"
 #include <stdlib.h>
 #include "device.h"
-
+#include "led.h"
 
 
 
@@ -23,6 +23,9 @@
    
     uint32_t data_variable = 100;
     uint32_t bss_variable;
+
+
+    
 
 
 
@@ -203,9 +206,41 @@
          // heap_variable  — адрес и значение
         printf("stack_variable   0x%08x %u\n", ptr2, stack_variable);
         printf("heap_variable    0x%08x %u\n", heap_variable, *heap_variable);
-    
-    
-
+  
     // возвращаем блок кучи
     free(heap_variable);
+    }
+
+
+    void boot_info(void)
+    {
+
+     #define VECTOR_TABLE 0x10000100
+
+    const uint32_t *vectors = (const uint32_t *)VECTOR_TABLE;
+    
+    uint32_t stack_top = vectors[0];
+    uint32_t reset_handler = vectors[1];
+
+   // указатель на таблицу векторов и два первых слова из неё
+    // указатель на регистр GPIO_IN и разряд вывода светодиода
+
+    // vector table   — адрес таблицы
+    //   stack top    — первое слово
+    //   reset        — второе слово
+    //   reset (even) — оно же со сброшенным признаком Thumb
+    printf("vector table    0x%08x\n", VECTOR_TABLE);
+    printf("  stack top     0x%08x\n", stack_top);
+    printf("  reset         0x%08x\n", reset_handler);   
+    printf("  reset (even)  0x%08x\n", reset_handler & ~1u); 
+
+    printf("gpio in         0x%08x\n", SIO_BASE+GPIO_IN); 
+    
+    
+    // gpio in        — адрес регистра
+    //   led bit      — разряд из регистра
+    //   gpio_get     — то же значение через SDK     
+
+
+
     }
