@@ -150,12 +150,14 @@
     
     
     // main, fw_info  — адрес с признаком Thumb и два байта по сброшенному адресу
+    uintptr_t code_addr = (uintptr_t)main;
     uint16_t *main_code = (uint16_t *)((uintptr_t)main & ~1u);
-        printf("%-10s      0x%08x   0x%04x\n", "main",main_code, *main_code);
 
-    
+        printf("%-10s      0x%08x   0x%04x\n", "main",code_addr, *main_code);
+
+       uintptr_t code_addr1 = (uintptr_t)fw_info;
        uint16_t *fw_info_code = (uint16_t *)((uintptr_t)fw_info & ~1u);
-    printf("%-10s      0x%08x   0x%04x\n", "fw_info", fw_info_code, *fw_info_code);
+    printf("%-10s      0x%08x   0x%04x\n", "fw_info", code_addr1, *fw_info_code);
             
     // commands       — адрес массива
        uint16_t *commands_code = (uint16_t *)((uintptr_t)commands);
