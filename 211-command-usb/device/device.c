@@ -1,5 +1,6 @@
 #include "device.h"
 #include <stdio.h>
+#include <stddef.h>
 #include "pico/unique_id.h"
 #include "pico/version.h"
 #include "hardware/regs/addressmap.h"
@@ -14,13 +15,25 @@
     uint32_t part;
     uint32_t revision;
 
-//volatile uint32_t chip_id = (uint32_t *)(SYSINFO_BASE + SYSINFO_CHIP_ID_OFFSET);
 
 
 
-//uint32_t manufacturer;
-//uint32_t part;
-//uint32_t revision;
+   
+    struct info_t device_card;
+   
+    
+
+
+void dev_info(void)
+{
+
+    device_card.revision = 1;
+    device_card.version = 4;
+    //device_card.name = "a";
+
+
+
+}
 
 
 void device_info(void)
