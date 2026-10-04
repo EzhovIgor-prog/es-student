@@ -4,7 +4,8 @@
 #include "device.h"
 #include "led.h"
 
-
+#include "hardware/regs/addressmap.h"
+#include "hardware/regs/sio.h"
 
     extern char __flash_binary_start;
     extern char __flash_binary_end;
@@ -234,12 +235,19 @@
     printf("  reset         0x%08x\n", reset_handler);   
     printf("  reset (even)  0x%08x\n", reset_handler & ~1u); 
 
-    printf("gpio in         0x%08x\n", SIO_BASE+GPIO_IN); 
-    
-    
+
     // gpio in        — адрес регистра
+     printf("gpio in         0x%08x\n", (uint32_t)(SIO_BASE + 0x004 )); 
+
     //   led bit      — разряд из регистра
-    //   gpio_get     — то же значение через SDK     
+    volatile uint32_t *gpio_in = (uint32_t *)(SIO_BASE + 0x004 );
+     uint32_t level = (*gpio_in >> led_pin()) & 1u;
+    printf("  led bit       %1u\n", level); 
+
+    //   gpio_get     — то же значение через SDK 
+    level = gpio_get(led_pin());
+    printf("  gpio_get      %1u\n", level); 
+       
 
 
 
