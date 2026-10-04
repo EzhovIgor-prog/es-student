@@ -237,10 +237,10 @@
 
 
     // gpio in        — адрес регистра
-     printf("gpio in         0x%08x\n", (uint32_t)(SIO_BASE + 0x004 )); 
+     printf("gpio in         0x%08x\n", (uint32_t)(SIO_BASE + SIO_GPIO_IN_OFFSET)); 
 
     //   led bit      — разряд из регистра
-    volatile uint32_t *gpio_in = (uint32_t *)(SIO_BASE + 0x004 );
+    volatile uint32_t *gpio_in = (uint32_t *)(SIO_BASE + SIO_GPIO_IN_OFFSET);
      uint32_t level = (*gpio_in >> led_pin()) & 1u;
     printf("  led bit       %1u\n", level); 
 

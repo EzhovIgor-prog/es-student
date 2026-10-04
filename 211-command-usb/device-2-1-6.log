@@ -3,43 +3,43 @@
 устройство: 2e8a:000a
 серийный номер: 504446729030CC1C
 порт: COM3
-начало: 2026-10-04T09:33:28
+начало: 2026-10-04T09:40:56
    0.000 --> boot_info
-   0.196 <-- boot_info
-   0.197 <-- dbg read_line:145 got boot_info
-   0.197 <-- vector table    0x10000100
-   0.197 <-- stack top     0x20042000
-   0.198 <-- reset         0x100001f7
-   0.198 <-- reset (even)  0x100001f6
-   0.198 <-- gpio in         0xd0000004
-   0.198 <-- led bit       0
-   0.199 <-- gpio_get      0
-   2.245 --> enable
-   2.377 <-- enable
-   2.379 <-- dbg read_line:145 got enable
-   2.380 <-- inf cmd_enable:34 led on
-   4.410 --> boot_info
-   4.598 <-- boot_info
-   4.600 <-- dbg read_line:145 got boot_info
-   4.601 <-- vector table    0x10000100
-   4.603 <-- stack top     0x20042000
-   4.604 <-- reset         0x100001f7
-   4.606 <-- reset (even)  0x100001f6
-   4.607 <-- gpio in         0xd0000004
-   4.608 <-- led bit       1
-   4.609 <-- gpio_get      1
-   6.659 --> disable
-   6.819 <-- disable
-   6.821 <-- dbg read_line:145 got disable
-   6.822 <-- inf cmd_disable:41 led off
-   8.861 --> boot_info
-   9.060 <-- boot_info
-   9.061 <-- dbg read_line:145 got boot_info
-   9.063 <-- vector table    0x10000100
-   9.064 <-- stack top     0x20042000
-   9.066 <-- reset         0x100001f7
-   9.067 <-- reset (even)  0x100001f6
-   9.068 <-- gpio in         0xd0000004
-   9.069 <-- led bit       0
-   9.070 <-- gpio_get      0
+   0.189 <-- boot_info
+   0.189 <-- dbg read_line:145 got boot_info
+   0.190 <-- vector table    0x10000100
+   0.190 <-- stack top     0x20042000
+   0.190 <-- reset         0x100001f7
+   0.191 <-- reset (even)  0x100001f6
+   0.191 <-- gpio in         0xd0000004
+   0.191 <-- led bit       0
+   0.192 <-- gpio_get      0
+   2.235 --> enable
+   2.370 <-- enable
+   2.372 <-- dbg read_line:145 got enable
+   2.373 <-- inf cmd_enable:34 led on
+   4.421 --> boot_info
+   4.611 <-- boot_info
+   4.612 <-- dbg read_line:145 got boot_info
+   4.614 <-- vector table    0x10000100
+   4.615 <-- stack top     0x20042000
+   4.616 <-- reset         0x100001f7
+   4.616 <-- reset (even)  0x100001f6
+   4.617 <-- gpio in         0xd0000004
+   4.617 <-- led bit       1
+   4.617 <-- gpio_get      1
+   6.666 --> disable
+   6.812 <-- disable
+   6.813 <-- dbg read_line:145 got disable
+   6.815 <-- inf cmd_disable:41 led off
+   8.860 --> boot_info
+   9.052 <-- boot_info
+   9.055 <-- dbg read_line:145 got boot_info
+   9.056 <-- vector table    0x10000100
+   9.057 <-- stack top     0x20042000
+   9.057 <-- reset         0x100001f7
+   9.058 <-- reset (even)  0x100001f6
+   9.058 <-- gpio in         0xd0000004
+   9.058 <-- led bit       0
+   9.058 <-- gpio_get      0
 итог: отправлено команд 5, принято строк 33
