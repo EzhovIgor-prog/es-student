@@ -3,13 +3,13 @@
 #include <stddef.h>
 #include "hardware/regs/addressmap.h"
 #include "hardware/regs/sysinfo.h"
-#include "hardware/clocks.h"
 
 
 static void row(const char *name, uint32_t set_khz, uint32_t measured_khz)
 {
     printf("%-8s %9u %12u\n", name, (unsigned)set_khz, (unsigned)measured_khz);
 }
+
 
 void clk_info(void)
 {
@@ -24,4 +24,10 @@ void clk_info(void)
     
     printf("%-8s %9s %12u\n", "rosc","-", (unsigned)frequency_count_khz(CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC));
    
+}
+
+
+void uptime(void)
+{
+    printf("uptime: %llu ms\n", time_us_64() / 1000);
 }

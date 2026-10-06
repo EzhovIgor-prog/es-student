@@ -1,0 +1,63 @@
+задание: 2.2.2
+проект: 221-command-time
+устройство: 2e8a:000a
+серийный номер: 504446729030CC1C
+порт: COM3
+начало: 2026-10-06T20:21:42
+   0.000 --> uptime
+   0.001 <-- uptime
+   0.003 <-- dbg read_line:136 got uptime
+   0.004 <-- uptime: 36500 ms
+   0.420 --> boot_info
+   0.421 <-- boot_info
+   0.423 <-- dbg read_line:136 got boot_info
+   0.425 <-- vector table    0x10000100
+   0.426 <-- stack top     0x20042000
+   0.427 <-- reset         0x100001f7
+   0.429 <-- reset (even)  0x100001f6
+   0.430 <-- gpio in         0xd0000004
+   0.430 <-- led bit       1
+   0.431 <-- gpio_get      1
+   0.839 --> uptime
+   0.839 <-- uptime
+   0.841 <-- dbg read_line:136 got uptime
+   0.842 <-- uptime: 37338 ms
+   1.260 --> boot_info
+   1.261 <-- boot_info
+   1.263 <-- dbg read_line:136 got boot_info
+   1.264 <-- vector table    0x10000100
+   1.266 <-- stack top     0x20042000
+   1.267 <-- reset         0x100001f7
+   1.268 <-- reset (even)  0x100001f6
+   1.270 <-- gpio in         0xd0000004
+   1.271 <-- led bit       1
+   1.272 <-- gpio_get      1
+   1.678 --> uptime
+   1.678 <-- uptime
+   1.680 <-- dbg read_line:136 got uptime
+   1.681 <-- uptime: 38177 ms
+   2.099 --> boot_info
+   2.099 <-- boot_info
+   2.101 <-- dbg read_line:136 got boot_info
+   2.103 <-- vector table    0x10000100
+   2.104 <-- stack top     0x20042000
+   2.104 <-- reset         0x100001f7
+   2.105 <-- reset (even)  0x100001f6
+   2.105 <-- gpio in         0xd0000004
+   2.105 <-- led bit       1
+   2.105 <-- gpio_get      1
+   2.517 --> uptime
+   2.518 <-- uptime
+   2.520 <-- dbg read_line:136 got uptime
+   2.521 <-- uptime: 39017 ms
+   2.936 --> boot_info
+   2.937 <-- boot_info
+   2.939 <-- dbg read_line:136 got boot_info
+   2.940 <-- vector table    0x10000100
+   2.942 <-- stack top     0x20042000
+   2.943 <-- reset         0x100001f7
+   2.944 <-- reset (even)  0x100001f6
+   2.944 <-- gpio in         0xd0000004
+   2.944 <-- led bit       0
+   2.944 <-- gpio_get      0
+итог: отправлено команд 8, принято строк 48
