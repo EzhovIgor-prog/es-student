@@ -4,7 +4,7 @@
 #include "hardware/regs/addressmap.h"
 #include "hardware/regs/sysinfo.h"
 #include "log.h"
-#include "C:/Users/User/Repositories/pico/pico-sdk/src/rp2_common/hardware_clocks/include/hardware/clocks.h"
+#include "clocks.h"
 
 
 
