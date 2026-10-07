@@ -8,6 +8,7 @@
 #include "memory.h"
 #include "command.h"
 #include "clock.h"
+#include "profiling.h"
 
 
 
@@ -109,6 +110,16 @@ void cmd_uptime(void)
    uptime();
 }
 
+void cmd_time_exec(void)
+{
+   time_exec();
+}
+
+void cmd_time_reset(void)
+{
+   time_reset();
+}
+
 //=======================================================
 const struct command_t commands[] = {
     { "info", cmd_info },
@@ -120,7 +131,11 @@ const struct command_t commands[] = {
     { "boot_info", cmd_boot_info },  
     { "clk_info", cmd_clk_info },  
     { "uptime", cmd_uptime }, 
-    { "calc_pi", cmd_calc_pi }, 
+    { "calc_pi", cmd_calc_pi },
+    { "main_time_exec", cmd_time_exec },
+    { "main_time_reset", cmd_time_reset }, 
+  
+  
 };
 
 const uint command_count = sizeof(commands) / sizeof(commands[0]);
@@ -209,12 +224,13 @@ int main()
 
     
 
+    profiling_init();
 
    while (1)
     {
- 
+        profiling_iteration();
+        
         blink();
-
         read_line();
 
         
