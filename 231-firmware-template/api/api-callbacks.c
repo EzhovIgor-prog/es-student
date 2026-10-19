@@ -10,10 +10,11 @@
 #include "profiling/profiling.h"
 #include "led-task/led-task.h"
 #include "button-task/button-task.h"
+#include "pi-task/pi-task.h"
 
 
 
-volatile double pi_result;
+
 
 
 
@@ -59,31 +60,13 @@ void cmd_uptime(const command_t *command)
 
 
 
-double calc_pi(uint n)
+static void cmd_pi_start(const command_t *command)
 {
-    double sum = 0.0;
-    double sign = 1.0;
-
-    for (int k = 0; k < n; k++) {
-        // Прибавить очередной член ряда: ±1 / (2k + 1)
-        sum += sign / (2.0 * k + 1.0);
-        sign = -sign;
-    }
-
-    // Сумма ряда равна π/4
-    return 4.0 * sum;
-}
-
-
-
-
-void cmd_calc_pi(const command_t *command)
-{
-    
     uint32_t terms = 1000000;
-    if (command->argc > 1 || (command->argc == 1 && !parse_u32(command->argv[0], &terms)))
+    if (command->argc > 1 ||
+        (command->argc == 1 && !parse_u32(command->argv[0], &terms)))
     {
-        printf("error: usage calc_pi [<terms>]\r\n");
+        printf("error: usage pi_start [<terms>]\r\n");
         return;
     }
     if (terms == 0)
@@ -91,16 +74,35 @@ void cmd_calc_pi(const command_t *command)
         printf("error: terms must be greater than 0\r\n");
         return;
     }
-    
-    
-    
-    uint64_t start_us = time_us_64();
-    pi_result = calc_pi(terms);
-    uint64_t spent_us = time_us_64() - start_us;
-
-    printf("pi: %.8f\n", pi_result);
-    printf("time: %llu ms\n", spent_us / 1000);
+    if (!pi_task_start(terms))
+    {
+        printf("error: pi is busy\r\n");
+        return;
+    }
+    printf("pi: started, %u terms\r\n", (unsigned)terms);
 }
+
+static void cmd_pi(const command_t *command)
+{
+    
+    double result;
+    uint64_t elapsed_ms;
+    
+    if (pi_task_get_result(&result, &elapsed_ms))
+    {
+        printf("pi: %.9f in %llu ms\r\n", result, (unsigned long long)elapsed_ms);
+    }
+    else if (pi_task_get_state() == PI_RUNNING)
+    {
+        printf("pi: running\r\n");
+    }
+    else
+    {
+        printf("pi: not started\r\n");
+    }
+}
+
+
 
 
 void cmd_time_exec(const command_t *command)
@@ -186,7 +188,8 @@ static void cmd_button(const command_t *command)
 const api_command_t api_commands[] = {
     {"info", "device passport", cmd_info},
     {"uptime", "time since reset", cmd_uptime}, 
-    {"calc_pi", "calculate pi: calc_pi [terms]", cmd_calc_pi},
+    {"pi_start", "start calculation: pi_start [<terms>]", cmd_pi_start},
+    {"pi", "calculation state or result", cmd_pi},
     {"main_time_exec", "superloop iteration: average and maximum", cmd_time_exec},
     {"main_time_reset", "reset maximum iteration", cmd_time_reset}, 
     {"led_enable", "LED on", cmd_led_enable},

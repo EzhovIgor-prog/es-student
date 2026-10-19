@@ -8,7 +8,7 @@
 #include "api/api.h"
 #include "stdio-text-protocol/stdio-text-protocol.h"
 #include "button-task/button-task.h"
-
+#include "pi-task/pi-task.h"
 
 
 
@@ -37,6 +37,6 @@ int main()
         }
 
          led_task_handle();
-            
+         pi_task_handle();  
     }
 }
