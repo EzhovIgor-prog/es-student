@@ -54,6 +54,7 @@ void led_task_init(void)
 // инициализируем пин светодиода и настраиваем его на выход
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    gpio_put(PICO_DEFAULT_LED_PIN, false);
 
     blink_period_ms = 1000;
     led_on = false;
@@ -148,3 +149,5 @@ void led_task_next_state(void)
     
     }
 }
+
+

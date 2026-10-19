@@ -9,7 +9,7 @@
 #include "device/device.h"
 #include "profiling/profiling.h"
 #include "led-task/led-task.h"
-
+#include "button-task/button-task.h"
 
 
 
@@ -94,9 +94,6 @@ void cmd_calc_pi(const command_t *command)
     
     
     
-    //printf("calc_pi %u\r\n", (unsigned)terms);
-
-
     uint64_t start_us = time_us_64();
     pi_result = calc_pi(terms);
     uint64_t spent_us = time_us_64() - start_us;
@@ -119,7 +116,7 @@ void cmd_time_reset(const command_t *command)
 
 static void prnledState(void)
 {
-    const char *stateLed = "off";
+    const char *stateLed = LED_STATE_OFF;
     switch (led_task_get_state())
     {
     case LED_STATE_OFF: 
@@ -177,6 +174,13 @@ static void cmd_led_period(const command_t *command)
 }
 
 
+static void cmd_button(const command_t *command)
+{
+    (void)command;
+    printf("button: %s, presses %u\r\n",
+           button_task_is_pressed() ? "pressed" : "released",
+           (unsigned)button_task_get_press_count());
+}
 
 
 const api_command_t api_commands[] = {
@@ -189,7 +193,7 @@ const api_command_t api_commands[] = {
     {"led_disable", "LED off", cmd_led_disable},
     {"led_blink", "LED blinking", cmd_led_blink},
     {"led_period", "set period: led_period <period_ms>", cmd_led_period},
-  
+    {"button", "button state and press count", cmd_button},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

@@ -7,7 +7,7 @@
 #include "profiling.h"
 #include "api/api.h"
 #include "stdio-text-protocol/stdio-text-protocol.h"
-
+#include "button-task/button-task.h"
 
 
 
@@ -20,14 +20,15 @@ int main()
 {
    
     stdio_init_all();
-
+    button_task_init();
     led_task_init();
 
     stdio_text_protocol_init();
-
+    
   
    while (1)
     {
+        button_task_handle();
 
         const command_t *command = stdio_text_protocol_handle();
         if (command != NULL)
