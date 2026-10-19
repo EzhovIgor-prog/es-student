@@ -5,7 +5,7 @@ set(PICO_PLATFORM rp2040)
 
 include(pico_sdk_import.cmake)
 
-project(231-firmware-template)
+project(231_firmware_template)
 
 pico_sdk_init()
 
