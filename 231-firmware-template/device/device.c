@@ -10,10 +10,10 @@
 
     char board_id[PICO_UNIQUE_BOARD_ID_SIZE_BYTES * 2 + 1];
     volatile uint32_t *chip_id;
-    uint32_t id;
-    uint32_t manufacturer;
-    uint32_t part;
-    uint32_t revision;
+    unsigned int id;
+    unsigned int manufacturer;
+    unsigned int part;
+    unsigned int revision;
 
        
     //struct info_t device_card = {0x00010000,"es-cmd-usb",2};
