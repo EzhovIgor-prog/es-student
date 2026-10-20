@@ -44,15 +44,6 @@ static bool parse_u32(const char *text, uint32_t *value)
 
 
 
-
-
-void cmd_info(const command_t *command)
-{
-    // печатаем паспорт устройства
-    device_info();
-}
-
-
 void cmd_uptime(const command_t *command)
 {
    printf("uptime: %llu ms\n", time_us_64() / 1000);
@@ -103,19 +94,6 @@ static void cmd_pi(const command_t *command)
 }
 
 
-
-
-void cmd_time_exec(const command_t *command)
-{
-   time_exec();
-}
-
-void cmd_time_reset(const command_t *command)
-{
-   time_reset();
-}
-
-
 static void prnledState(void)
 {
     const char *stateLed = LED_STATE_OFF;
@@ -140,21 +118,21 @@ static void prnledState(void)
 
 static void cmd_led_enable(const command_t *command)
 {
-    //(void)command;
+    (void)command;
     led_task_set_state(LED_STATE_ON);
     prnledState();
 }
 
 static void cmd_led_disable(const command_t *command)
 {
-    //(void)command;
+    (void)command;
     led_task_set_state(LED_STATE_OFF);
     prnledState();
 }
 
 static void cmd_led_blink(const command_t *command)
 {
-    //(void)command;
+    (void)command;
     led_task_set_state(LED_STATE_BLINK);
     prnledState();
 }
@@ -184,14 +162,53 @@ static void cmd_button(const command_t *command)
            (unsigned)button_task_get_press_count());
 }
 
+static void cmd_info(const command_t *command)
+{
+    (void)command;
+    device_info_t info;
+    device_get_info(&info);
+    printf("name: %s\r\n", DEVICE_NAME);
+    printf("version: %s\r\n", FIRMWARE_VERSION);
+    printf("project: %s\r\n", DEVICE_PROJECT);
+    printf("repo: %s\r\n", DEVICE_REPO);
+    printf("board: %s\r\n", info.board);
+    printf("serial: %s\r\n", info.serial);
+    printf("chip: manufacturer 0x%03x, part 0x%04x, revision %u\r\n",
+           (unsigned)info.manufacturer, (unsigned)info.part, (unsigned)info.revision);
+    printf("pico-sdk: %s\r\n", info.sdk_version);
+}
+
+
+static void cmd_profiling(const command_t *command)
+{
+    (void)command;
+    for (uint8_t id = 0; id < PROFILING_STOPWATCH_COUNT; id++)
+    {
+        profiling_result_t result;
+        if (profiling_get(id, &result))
+        {
+            printf("%-10s count %-10u mean %.2f us  max %u us\r\n",
+                   result.name, (unsigned)result.count, result.mean_us,
+                   (unsigned)result.max_us);
+        }
+    }
+}
+
+static void cmd_profiling_reset(const command_t *command)
+{
+    (void)command;
+    profiling_reset();
+    printf("profiling reset\r\n");
+}
+
 
 const api_command_t api_commands[] = {
     {"info", "device passport", cmd_info},
     {"uptime", "time since reset", cmd_uptime}, 
     {"pi_start", "start calculation: pi_start [<terms>]", cmd_pi_start},
     {"pi", "calculation state or result", cmd_pi},
-    {"main_time_exec", "superloop iteration: average and maximum", cmd_time_exec},
-    {"main_time_reset", "reset maximum iteration", cmd_time_reset}, 
+    {"profiling", "stopwatch results", cmd_profiling},
+    {"profiling_reset", "reset stopwatches", cmd_profiling_reset},
     {"led_enable", "LED on", cmd_led_enable},
     {"led_disable", "LED off", cmd_led_disable},
     {"led_blink", "LED blinking", cmd_led_blink},
