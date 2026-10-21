@@ -1,19 +1,18 @@
 #include "led-task/led-task.h"
-#include "hardware/gpio.h"
-#include "pico/stdlib.h"
+#include <stddef.h>
 #include "systime/systime.h"
+#include "platform/platform.h"
 
 static led_state_t led_state = LED_STATE_BLINK;
 static uint32_t blink_period_ms;
 static uint64_t last_toggle_us;
 static bool led_on;
 
-#define PICO_DEFAULT_LED_PIN 25
 
 void led_set(bool on)
 {
     led_on = on;
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+    platform_led_set(led_on);
 }
 
 
@@ -51,11 +50,6 @@ static uint64_t half_period_us(void)
 
 void led_task_init(void)
 {
-// инициализируем пин светодиода и настраиваем его на выход
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    gpio_put(PICO_DEFAULT_LED_PIN, false);
-
     blink_period_ms = 1000;
     led_on = false;
     led_task_set_state(LED_STATE_BLINK);

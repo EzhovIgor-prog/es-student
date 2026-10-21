@@ -1,6 +1,5 @@
 #include "pi-task/pi-task.h"
 #include <stddef.h>
-#include "pico/stdlib.h"
 #include "systime/systime.h"
 
 // 585 тактов при 125 МГц: 100 * 585 / 125 = 468 мкс.

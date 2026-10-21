@@ -1,13 +1,8 @@
 #include "button-task/button-task.h"
 
 #include <stddef.h>
-#include "hardware/gpio.h"
-#include "pico/stdlib.h"
-#include "led-task/led-task.h"
 #include "systime/systime.h"
-
-
-static const uint BUTTON_PIN = 15;
+#include "platform/platform.h"
 
 typedef enum
 {
@@ -22,29 +17,24 @@ static button_state_t button_state;
 static uint64_t changed_us;
 static uint32_t press_count;
 
-void button_task_init(void)
+
+static button_task_callback_t press_callback;
+
+
+void button_task_init(button_task_callback_t on_press)
 {
-    // инициализируем пин кнопки и настраиваем его на вход с PULLUP
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN);
-
-
+ 
     button_state = BUTTON_UNPRESSED;
     press_count = 0;
     changed_us = 0;
+    press_callback = on_press;
 }
 
-
-bool button_read(void)
-{
-    return !gpio_get(BUTTON_PIN);
-}
 
 
 void button_task_handle(void)
 {
-    bool pressed = button_read();
+    bool pressed = platform_button_read();
     uint64_t now_us = systime_us();
 
     switch (button_state)
@@ -65,8 +55,10 @@ void button_task_handle(void)
         {
             button_state = BUTTON_PRESSED;
             press_count++;
-
-            led_task_next_state();
+            if (press_callback != NULL)
+            {
+                press_callback();
+            }
          }
         break;
     case BUTTON_PRESSED:

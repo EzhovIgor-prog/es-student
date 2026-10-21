@@ -8,9 +8,8 @@
 #include "stdio-text-protocol/stdio-text-protocol.h"
 #include "button-task/button-task.h"
 #include "pi-task/pi-task.h"
-//#include "device/device.h"
 #include "firmware.h"
-
+#include "platform/platform.h"
 
 
 typedef enum
@@ -28,8 +27,9 @@ typedef enum
 int main()
 {
    
-    stdio_init_all();
-    button_task_init();
+    platform_init();
+
+    button_task_init(led_task_next_state);
     led_task_init();
     stdio_text_protocol_init();
 
