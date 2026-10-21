@@ -51,6 +51,8 @@ void profiling_stop(uint32_t id)
     }
 }
 
+
+
 bool profiling_get(uint32_t id, profiling_result_t *result)
 {
     if (id >= PROFILING_STOPWATCH_COUNT || result == NULL ||
@@ -86,6 +88,16 @@ void profiling_stopwatch_init(uint32_t id, const char *name)
     (void)name;
 }
 
+void profiling_start(uint32_t id)
+{
+    (void)id;
+}
+
+void profiling_stop(uint32_t id)
+{
+    (void)id;
+}
+
 bool profiling_get(uint32_t id, profiling_result_t *result)
 {
     (void)id;
@@ -96,4 +108,7 @@ bool profiling_get(uint32_t id, profiling_result_t *result)
 void profiling_reset(void)
 {
 }
+
+
+
 #endif

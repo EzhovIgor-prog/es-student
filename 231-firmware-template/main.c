@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 #include "logging/log.h"
 #include "led-task/led-task.h"
@@ -9,6 +9,7 @@
 #include "pi-task/pi-task.h"
 #include "firmware.h"
 #include "platform/platform.h"
+
 
 
 typedef enum
