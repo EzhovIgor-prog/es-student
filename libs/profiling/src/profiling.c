@@ -1,6 +1,7 @@
 #include "profiling/profiling.h"
 
 #include <stddef.h>
+
 #if PROFILING_ENABLED
 #include "pico/time.h"
 
@@ -81,34 +82,4 @@ void profiling_reset(void)
         stopwatches[id].started_us = now_us;
     }
 }
-#else
-void profiling_stopwatch_init(uint32_t id, const char *name)
-{
-    (void)id;
-    (void)name;
-}
-
-void profiling_start(uint32_t id)
-{
-    (void)id;
-}
-
-void profiling_stop(uint32_t id)
-{
-    (void)id;
-}
-
-bool profiling_get(uint32_t id, profiling_result_t *result)
-{
-    (void)id;
-    (void)result;
-    return false;
-}
-
-void profiling_reset(void)
-{
-}
-
-
-
 #endif
