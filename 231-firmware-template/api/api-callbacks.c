@@ -11,8 +11,8 @@
 #include "led-task/led-task.h"
 #include "button-task/button-task.h"
 #include "pi-task/pi-task.h"
-
-
+#include "systime/systime.h"
+#include "firmware.h"
 
 
 
@@ -46,7 +46,7 @@ static bool parse_u32(const char *text, uint32_t *value)
 
 void cmd_uptime(const command_t *command)
 {
-   printf("uptime: %llu ms\n", time_us_64() / 1000);
+   printf("uptime: %llu ms\n", systime_ms());
 }
 
 
@@ -167,10 +167,10 @@ static void cmd_info(const command_t *command)
     (void)command;
     device_info_t info;
     device_get_info(&info);
-    printf("name: %s\r\n", DEVICE_NAME);
+    printf("name: %s\r\n", FIRMWARE_NAME);
     printf("version: %s\r\n", FIRMWARE_VERSION);
-    printf("project: %s\r\n", DEVICE_PROJECT);
-    printf("repo: %s\r\n", DEVICE_REPO);
+    printf("project: %s\r\n", FIRMWARE_PROJECT);
+    printf("repo: %s\r\n", FIRMWARE_REPO);
     printf("board: %s\r\n", info.board);
     printf("serial: %s\r\n", info.serial);
     printf("chip: manufacturer 0x%03x, part 0x%04x, revision %u\r\n",
@@ -182,7 +182,8 @@ static void cmd_info(const command_t *command)
 static void cmd_profiling(const command_t *command)
 {
     (void)command;
-    for (uint8_t id = 0; id < PROFILING_STOPWATCH_COUNT; id++)
+#if PROFILING_ENABLED
+    for (uint32_t id = 0; id < PROFILING_STOPWATCH_COUNT; id++)
     {
         profiling_result_t result;
         if (profiling_get(id, &result))
@@ -192,6 +193,9 @@ static void cmd_profiling(const command_t *command)
                    (unsigned)result.max_us);
         }
     }
+#else
+    printf("profiling is disabled in this build\r\n");
+#endif
 }
 
 static void cmd_profiling_reset(const command_t *command)

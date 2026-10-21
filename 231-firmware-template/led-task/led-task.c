@@ -1,7 +1,7 @@
 #include "led-task/led-task.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
-
+#include "systime/systime.h"
 
 static led_state_t led_state = LED_STATE_BLINK;
 static uint32_t blink_period_ms;
@@ -24,7 +24,7 @@ bool period_elapsed(uint64_t *last_us, uint64_t period_us)
     {
         return false;
     }
-    uint64_t now_us = time_us_64();
+    uint64_t now_us = systime_us();
     if (now_us - *last_us < period_us)
     {
         return false;
@@ -79,7 +79,7 @@ void led_task_set_state(led_state_t state)
         break;
     case LED_STATE_BLINK:
         led_on = !led_on;
-        last_toggle_us = time_us_64();
+        last_toggle_us = systime_us();
         break;
     default:
         return;
@@ -122,7 +122,7 @@ bool led_task_set_period_ms(uint32_t period_ms)
         return false;
     }
     blink_period_ms = period_ms;
-    last_toggle_us = time_us_64();
+    last_toggle_us = systime_us();
     return true;
 }
 

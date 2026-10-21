@@ -1,9 +1,7 @@
 #include "profiling/profiling.h"
-#include "pico/stdlib.h"
-#include <stdio.h>
+
 #include <stddef.h>
-#include "hardware/regs/addressmap.h"
-#include "hardware/regs/sysinfo.h"
+#if PROFILING_ENABLED
 #include "pico/time.h"
 
 typedef struct
@@ -81,3 +79,21 @@ void profiling_reset(void)
         stopwatches[id].started_us = now_us;
     }
 }
+#else
+void profiling_stopwatch_init(uint32_t id, const char *name)
+{
+    (void)id;
+    (void)name;
+}
+
+bool profiling_get(uint32_t id, profiling_result_t *result)
+{
+    (void)id;
+    (void)result;
+    return false;
+}
+
+void profiling_reset(void)
+{
+}
+#endif

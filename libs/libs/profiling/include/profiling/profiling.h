@@ -1,13 +1,12 @@
 #pragma once
 
-#include "pico/types.h"
-
+#include <stdbool.h>
 #include <stdint.h>
-#include "hardware/clocks.h"
-#include "hardware/timer.h"
 
 
-
+#ifndef PROFILING_ENABLED
+#define PROFILING_ENABLED 1
+#endif
 
 typedef struct
 {

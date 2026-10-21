@@ -1,7 +1,7 @@
 #include "pi-task/pi-task.h"
 #include <stddef.h>
-#include "hardware/gpio.h"
 #include "pico/stdlib.h"
+#include "systime/systime.h"
 
 // 585 тактов при 125 МГц: 100 * 585 / 125 = 468 мкс.
 #define PI_TERMS_PER_CALL 100
@@ -27,7 +27,7 @@ bool pi_task_start(uint32_t terms)
         return false;
     }
 
-    started_us = time_us_64();
+    started_us = systime_us();
     pi_state = PI_RUNNING;
     pi_k = 0;
     pi_terms = terms;
@@ -56,7 +56,7 @@ void pi_task_handle(void)
     if (pi_k == pi_terms)
     {
         pi_result = 4.0 * pi_sum;
-        finished_us = time_us_64();
+        finished_us = systime_us();
         pi_state = PI_READY;
     }
 }
