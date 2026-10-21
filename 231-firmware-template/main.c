@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "pico/stdlib.h"
 #include <string.h>
 #include "logging/log.h"
 #include "led-task/led-task.h"

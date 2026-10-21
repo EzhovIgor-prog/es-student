@@ -44,7 +44,7 @@ static bool parse_u32(const char *text, uint32_t *value)
 
 
 
-void cmd_uptime(const command_t *command)
+static void cmd_uptime(const command_t *command)
 {
    printf("uptime: %llu ms\n", systime_ms());
 }

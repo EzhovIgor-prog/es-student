@@ -1,4 +1,5 @@
 #include "platform/platform.h"
+
 #include "pico/stdlib.h"
 
 static const uint LED_PIN = PICO_DEFAULT_LED_PIN;
