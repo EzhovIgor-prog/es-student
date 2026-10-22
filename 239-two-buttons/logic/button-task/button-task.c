@@ -1,5 +1,6 @@
 #include "button-task/button-task.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include "systime/systime.h"
 #include "platform/platform.h"
@@ -18,22 +19,29 @@ typedef struct
     uint64_t changed_us;
     uint32_t press_count;
     button_task_callback_t press_callback;
+    button_task_callback_t long_press_callback;
+    uint64_t long_changed_us;
+    bool    long_press_state;
 } button_t;
 
 static button_t buttons[PLATFORM_BUTTON_QTY];
 
 
-static const uint64_t DEBOUNCE_US = 20000;
+static const uint64_t DEBOUNCE_US = 20000;  //20 ms
+static const uint64_t LONG_PRESS_WAIT_US = 1000000; //1 sec
 
-
-void button_task_init(platform_button_t id, button_task_callback_t press_callback)
+void button_task_init(platform_button_t id, button_task_callback_t press_callback, button_task_callback_t long_press_callback)
 {
     if ((unsigned)id < PLATFORM_BUTTON_QTY)
     {
         buttons[id] = (button_t){.button_state = BUTTON_UNPRESSED, 
                                 .changed_us = 0,
                                 .press_count = 0,                                      
-                                .press_callback = press_callback};
+                                .press_callback = press_callback,
+                                .long_press_callback = long_press_callback,
+                                .long_changed_us = 0,
+                                .long_press_state = 0
+                            };
     }
 }
 
@@ -49,8 +57,9 @@ static void button_handle(platform_button_t id)
     case BUTTON_UNPRESSED:
         if (pressed)
         {
-            buttons[id].changed_us = now_us;
+            buttons[id].changed_us = buttons[id].long_changed_us = now_us;
             buttons[id].button_state = BUTTON_PRESS_PENDING;
+            buttons[id].long_press_state = false;
         }
         break;
     case BUTTON_PRESS_PENDING:
@@ -60,19 +69,37 @@ static void button_handle(platform_button_t id)
         }
         else if (now_us - buttons[id].changed_us >= DEBOUNCE_US)
         {
+            printf("short press\n");
             buttons[id].button_state = BUTTON_PRESSED;
             buttons[id].press_count++;
             if (buttons[id].press_callback != NULL)
             {
                 buttons[id].press_callback();
             }
+            
+
          }
         break;
     case BUTTON_PRESSED:
         if (!pressed)
         {
-            buttons[id].changed_us = now_us;
+            buttons[id].changed_us = buttons[id].long_changed_us = now_us;
             buttons[id].button_state = BUTTON_UNPRESS_PENDING;
+        }
+        else
+        {
+            //обработка длительного нажатия   
+            if ((now_us - buttons[id].long_changed_us >= LONG_PRESS_WAIT_US) && (buttons[id].long_press_state == false))
+            {
+                
+                buttons[id].long_press_state = true;
+
+                if (buttons[id].long_press_callback != NULL)
+                {
+                    buttons[id].long_press_callback();
+                }
+            }
+
         }
         break;
     case BUTTON_UNPRESS_PENDING:

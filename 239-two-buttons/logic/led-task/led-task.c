@@ -53,7 +53,7 @@ void led_task_init(void)
 {
     blink_period_ms = 1000;
     led_on = false;
-    led_task_set_state(LED_STATE_BLINK);
+    led_task_set_state(LED_STATE_ON);
 }
 
 
@@ -164,3 +164,8 @@ void led_task_next_period(void)
     led_task_set_period_ms(period_ms);
 }
 
+
+void led_task_en_blink(void)
+{
+    led_task_set_state(LED_STATE_BLINK);
+}
