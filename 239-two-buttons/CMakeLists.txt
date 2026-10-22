@@ -5,7 +5,7 @@ set(PICO_PLATFORM rp2040)
 
 include(pico_sdk_import.cmake)
 
-project(239-two-buttons)
+project(239_two_buttons)
 
 pico_sdk_init()
 
