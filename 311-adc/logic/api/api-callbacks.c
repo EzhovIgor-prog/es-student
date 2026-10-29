@@ -220,6 +220,11 @@ static void cmd_get_voltage(const command_t *command)
     printf("voltage: %2.3f V\n", platform_voltage_read());
 }
 
+static void cmd_get_temp(const command_t *command)
+{
+    printf("temp: %2.1f C\n", platform_temp_read());
+}
+
 
 const api_command_t api_commands[] = {
     {"info", "device passport", cmd_info},
@@ -234,6 +239,7 @@ const api_command_t api_commands[] = {
     {"led_period", "set period: led_period <period_ms>", cmd_led_period},
     {"button", "button state and press count", cmd_button},
     {"get_voltage", "voltage on GP26, ADC input 0", cmd_get_voltage},
+    {"get_temp", "chip temperature, degrees Celsius", cmd_get_temp },
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

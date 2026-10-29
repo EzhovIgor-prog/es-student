@@ -6,6 +6,8 @@
 // вход АЦП: вывод GP26, канал 0
 #define ADC_PIN 26
 #define ADC_CHANNEL 0
+// встроенный датчик температуры — канал 4
+#define ADC_TEMP_CHANNEL 4
 
 // опорное напряжение АЦП на плате Pico и число уровней 12-разрядного кода
 #define ADC_VREF_V 3.3f
@@ -34,7 +36,7 @@ void platform_init(void)
 
     adc_init();
     adc_gpio_init(ADC_PIN);
-
+    adc_set_temp_sensor_enabled(true);  //включить питание датчика температуры чипа
 }
 
 
@@ -52,4 +54,13 @@ float platform_voltage_read(void)
 {
     adc_select_input(ADC_CHANNEL);
     return adc_read() * ADC_VREF_V / ADC_LEVELS;
+}
+
+float platform_temp_read(void)
+{
+    adc_select_input(ADC_TEMP_CHANNEL);
+
+    float u = adc_read() * ADC_VREF_V / ADC_LEVELS;
+
+    return 27.0 - (u - 0.706) / 0.001721;
 }

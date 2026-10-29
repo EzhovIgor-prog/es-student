@@ -20,3 +20,4 @@ bool platform_button_read(platform_button_t id);
 
 // напряжение на входе АЦП, выводе GP26, в вольтах
 float platform_voltage_read(void);
+float platform_temp_read(void);
