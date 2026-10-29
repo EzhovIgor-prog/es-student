@@ -1,0 +1,47 @@
+задание: 3.1.1
+проект: 311-adc
+устройство: 2e8a:000a
+серийный номер: 504446729030CC1C
+порт: COM3
+начало: 2026-10-29T17:12:51
+   0.000 --> 
+   0.558 --> help
+   0.560 <-- help
+   0.560 <-- help             list of commands
+   0.560 <-- info             device passport
+   0.560 <-- uptime           time since reset
+   0.560 <-- pi_start         start calculation: pi_start [<terms>]
+   0.561 <-- pi               calculation state or result
+   0.561 <-- profiling        stopwatch results
+   0.561 <-- profiling_reset  reset stopwatches
+   0.561 <-- led_enable       LED on
+   0.561 <-- led_disable      LED off
+   0.561 <-- led_blink        LED blinking
+   0.561 <-- led_period       set period: led_period <period_ms>
+   0.561 <-- button           button state and press count
+   0.619 <-- get_voltage      voltage on GP26, ADC input 0
+   0.620 <-- get_temp         chip temperature, degrees Celsius
+   0.620 <-- tm_start         start telemetry: tm_start [<period_ms>]
+   0.620 <-- tm_stop          stop telemetry
+   0.620 <-- charge_on        charge RC circuit from GP22
+   0.620 <-- charge_off       discharge RC circuit through GP22
+   1.614 --> info
+   1.675 <-- info
+   1.675 <-- name: es-adc
+   1.676 <-- version: 1.0.0
+   1.676 <-- project: 311-adc
+   1.676 <-- repo: https://github.com/EzhovIgor-prog/es-student
+   1.676 <-- board: pico
+   1.676 <-- serial: 504446729030CC1C
+   1.677 <-- chip: manufacturer 0x927, part 0x0002, revision 2
+   1.677 <-- pico-sdk: 2.3.1
+   2.670 --> get_voltage
+   2.731 <-- get_voltage
+   2.731 <-- voltage: 1.278 V
+   3.726 --> get_voltage
+   3.787 <-- get_voltage
+   3.787 <-- voltage: 0.640 V
+   4.783 --> get_voltage
+   4.845 <-- get_voltage
+   4.845 <-- voltage: 0.412 V
+итог: отправлено кадров 6, принято строк 34
