@@ -29,3 +29,5 @@ void telemetry_task_stop(void);
 
 telemetry_state_t telemetry_task_get_state(void);
 uint32_t telemetry_task_get_period_ms(void);
+
+#define TELEMETRY_DEFAULT_PERIOD_MS 100

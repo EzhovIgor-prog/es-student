@@ -12,7 +12,7 @@
 // опорное напряжение АЦП на плате Pico и число уровней 12-разрядного кода
 #define ADC_VREF_V 3.3f
 #define ADC_LEVELS 4096
-
+#define RC_CHARGE_PIN 22
 
 static const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 static const uint BUTTON_PINS[PLATFORM_BUTTON_QTY] = {15, 14};
@@ -37,6 +37,11 @@ void platform_init(void)
     adc_init();
     adc_gpio_init(ADC_PIN);
     adc_set_temp_sensor_enabled(true);  //включить питание датчика температуры чипа
+
+    gpio_init(RC_CHARGE_PIN);
+    gpio_set_dir(RC_CHARGE_PIN, GPIO_OUT);
+    gpio_put(RC_CHARGE_PIN, false);
+
 }
 
 
@@ -63,4 +68,9 @@ float platform_temp_read(void)
     float u = adc_read() * ADC_VREF_V / ADC_LEVELS;
 
     return 27.0 - (u - 0.706) / 0.001721;
+}
+
+void platform_charge_set(bool on)
+{
+        gpio_put(RC_CHARGE_PIN, on);
 }

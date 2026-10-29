@@ -16,7 +16,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 
-#define TELEMETRY_DEFAULT_PERIOD_MS 100
+
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -259,7 +259,19 @@ static void cmd_tm_stop(const command_t *command)
     printf("telemetry: stopped\r\n");
 }
 
-
+static void cmd_charge_on(const command_t *command)
+{
+    (void)command;
+    platform_charge_set(true);
+    printf("charge: on\r\n");
+}
+    
+static void cmd_charge_off(const command_t *command)
+{
+    (void)command;
+    platform_charge_set(false);
+    printf("charge: off\r\n");
+}
 
 
 
@@ -279,6 +291,8 @@ const api_command_t api_commands[] = {
     {"get_temp", "chip temperature, degrees Celsius", cmd_get_temp },
     {"tm_start", "start telemetry: tm_start [<period_ms>]", cmd_tm_start},
     {"tm_stop", "stop telemetry", cmd_tm_stop},
+    {"charge_on", "charge RC circuit from GP22", cmd_charge_on},
+    {"charge_off", "discharge RC circuit through GP22", cmd_charge_off},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);
