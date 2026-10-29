@@ -14,9 +14,9 @@
 #include "systime/systime.h"
 #include "firmware.h"
 #include "platform/platform.h"
+#include "telemetry-task/telemetry-task.h"
 
-
-
+#define TELEMETRY_DEFAULT_PERIOD_MS 100
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -217,13 +217,50 @@ static void cmd_profiling_reset(const command_t *command)
 // напряжение на GP26 у platform, ответ voltage: <напряжение> V
 static void cmd_get_voltage(const command_t *command)
 {
-    printf("voltage: %2.3f V\n", platform_voltage_read());
+    printf("voltage: %.3f V\n", platform_voltage_read());
 }
 
 static void cmd_get_temp(const command_t *command)
 {
-    printf("temp: %2.1f C\n", platform_temp_read());
+    printf("temp: %.1f C\n", platform_temp_read());
 }
+
+
+void api_print_telemetry(const telemetry_record_t *record)
+{
+    if (record != NULL)
+    {
+        printf("tm: %llu %.3f %.1f\r\n", (unsigned long long)record->time_us,
+               (double)record->voltage_v, (double)record->temp_c);
+    }
+}
+
+static void cmd_tm_start(const command_t *command)
+{
+    uint32_t period_ms = TELEMETRY_DEFAULT_PERIOD_MS;
+    if (command->argc > 1 ||
+        (command->argc == 1 && !parse_u32(command->argv[0], &period_ms)))
+    {
+        printf("error: usage tm_start [<period_ms>]\r\n");
+        return;
+    }
+    if (!telemetry_task_start(period_ms))
+    {
+        printf("error: period_ms must be at least 10\r\n");
+        return;
+    }
+    printf("telemetry: started, period %u ms\r\n", (unsigned)period_ms);
+}
+
+static void cmd_tm_stop(const command_t *command)
+{
+    (void)command;
+    telemetry_task_stop();
+    printf("telemetry: stopped\r\n");
+}
+
+
+
 
 
 const api_command_t api_commands[] = {
@@ -240,6 +277,8 @@ const api_command_t api_commands[] = {
     {"button", "button state and press count", cmd_button},
     {"get_voltage", "voltage on GP26, ADC input 0", cmd_get_voltage},
     {"get_temp", "chip temperature, degrees Celsius", cmd_get_temp },
+    {"tm_start", "start telemetry: tm_start [<period_ms>]", cmd_tm_start},
+    {"tm_stop", "stop telemetry", cmd_tm_stop},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);
