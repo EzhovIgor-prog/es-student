@@ -3,75 +3,75 @@
 устройство: 2e8a:000a
 серийный номер: 504446729030CC1C
 порт: COM3
-начало: 2026-11-08T15:19:45
+начало: 2026-11-08T15:32:35
    0.000 --> 
-   0.560 --> help
-   0.561 <-- help
-   0.561 <-- help             list of commands
-   0.561 <-- info             device passport
-   0.562 <-- uptime           time since reset
-   0.562 <-- pi_start         start calculation: pi_start [<terms>]
-   0.562 <-- pi               calculation state or result
-   0.562 <-- profiling        stopwatch results
-   0.563 <-- profiling_reset  reset stopwatches
-   0.563 <-- led_enable       LED on
-   0.563 <-- led_disable      LED off
-   0.563 <-- led_blink        LED blinking
-   0.563 <-- led_period       set period: led_period <period_ms>
-   0.563 <-- button           button state and press count
-   0.563 <-- get_voltage      voltage on GP26 (ADC input 0)
-   0.563 <-- get_temp         chip temperature in Celsius
-   0.564 <-- tm_start         start telemetry
-   0.564 <-- tm_stop          stop telemetry
-   0.564 <-- charge_on        charge RC circuit (GP22)
-   0.564 <-- charge_off       discharge RC circuit (GP22)
-   0.622 <-- timer_blink_start blink led by timer: timer_blink_start <period_ms>
-   0.622 <-- timer_blink_stop stop timer blink, number of toggles
-   1.612 --> info
-   1.674 <-- info
-   1.674 <-- name: es-recorder
-   1.674 <-- version: 1.0.0
-   1.674 <-- project: 321-audio-recorder
-   1.675 <-- repo: https://github.com/EzhovIgor-prog/es-student
-   1.675 <-- board: pico
-   1.675 <-- serial: 504446729030CC1C
-   1.675 <-- chip: manufacturer 0x927, part 0x0002, revision 2
-   1.675 <-- pico-sdk: 2.3.0
-   2.666 --> timer_blink_start 250
-   2.726 <-- timer_blink_start 250
-   2.727 <-- timer_blink: started, period 250 ms
-   3.718 --> pi_start 3000000
-   3.780 <-- pi_start 3000000
-   3.780 <-- pi: started, 3000000 terms
-   4.774 --> uptime
-   4.836 <-- uptime
-   4.836 <-- uptime: 27576 ms
-   5.832 --> info
-   5.894 <-- info
-   5.894 <-- name: es-recorder
-   5.894 <-- version: 1.0.0
-   5.894 <-- project: 321-audio-recorder
-   5.894 <-- repo: https://github.com/EzhovIgor-prog/es-student
-   5.894 <-- board: pico
-   5.894 <-- serial: 504446729030CC1C
-   5.894 <-- chip: manufacturer 0x927, part 0x0002, revision 2
-   5.895 <-- pico-sdk: 2.3.0
-   6.888 --> pi
-   6.950 <-- pi
-   6.951 <-- pi: running
-   8.943 --> timer_blink_stop
-   9.006 <-- timer_blink_stop
-   9.006 <-- timer_blink: stopped, 25 toggles
-   9.995 --> timer_blink_start 100
-  10.058 <-- timer_blink_start 100
-  10.058 <-- timer_blink: started, period 100 ms
-  12.039 --> timer_blink_stop
-  12.100 <-- timer_blink_stop
-  12.100 <-- timer_blink: stopped, 20 toggles
-  13.094 --> timer_blink_start 5
-  13.155 <-- timer_blink_start 5
-  13.155 <-- error: period_ms must be 10..60000
-  13.656 --> timer_blink_start
-  13.718 <-- timer_blink_start
-  13.718 <-- timer_blink: started, period 100 ms
+   0.554 --> help
+   0.555 <-- help
+   0.556 <-- help             list of commands
+   0.556 <-- info             device passport
+   0.556 <-- uptime           time since reset
+   0.556 <-- pi_start         start calculation: pi_start [<terms>]
+   0.556 <-- pi               calculation state or result
+   0.556 <-- profiling        stopwatch results
+   0.556 <-- profiling_reset  reset stopwatches
+   0.557 <-- led_enable       LED on
+   0.557 <-- led_disable      LED off
+   0.557 <-- led_blink        LED blinking
+   0.557 <-- led_period       set period: led_period <period_ms>
+   0.557 <-- button           button state and press count
+   0.558 <-- get_voltage      voltage on GP26 (ADC input 0)
+   0.558 <-- get_temp         chip temperature in Celsius
+   0.558 <-- tm_start         start telemetry
+   0.558 <-- tm_stop          stop telemetry
+   0.558 <-- charge_on        charge RC circuit (GP22)
+   0.558 <-- charge_off       discharge RC circuit (GP22)
+   0.616 <-- timer_blink_start blink led by timer: timer_blink_start <period_ms>
+   0.616 <-- timer_blink_stop stop timer blink, number of toggles
+   1.606 --> info
+   1.668 <-- info
+   1.668 <-- name: es-recorder
+   1.668 <-- version: 1.0.0
+   1.668 <-- project: 321-audio-recorder
+   1.668 <-- repo: https://github.com/EzhovIgor-prog/es-student
+   1.668 <-- board: pico
+   1.669 <-- serial: 504446729030CC1C
+   1.669 <-- chip: manufacturer 0x927, part 0x0002, revision 2
+   1.669 <-- pico-sdk: 2.3.0
+   2.659 --> timer_blink_start 250
+   2.721 <-- timer_blink_start 250
+   2.721 <-- timer_blink: started, period 250 ms
+   3.711 --> pi_start 3000000
+   3.772 <-- pi_start 3000000
+   3.772 <-- pi: started, 3000000 terms
+   4.756 --> uptime
+   4.818 <-- uptime
+   4.818 <-- uptime: 80559 ms
+   5.812 --> info
+   5.874 <-- info
+   5.874 <-- name: es-recorder
+   5.875 <-- version: 1.0.0
+   5.875 <-- project: 321-audio-recorder
+   5.875 <-- repo: https://github.com/EzhovIgor-prog/es-student
+   5.875 <-- board: pico
+   5.875 <-- serial: 504446729030CC1C
+   5.875 <-- chip: manufacturer 0x927, part 0x0002, revision 2
+   5.875 <-- pico-sdk: 2.3.0
+   6.866 --> pi
+   6.928 <-- pi
+   6.928 <-- pi: running
+   8.912 --> timer_blink_stop
+   8.974 <-- timer_blink_stop
+   8.974 <-- timer_blink: stopped, 25 toggles
+   9.966 --> timer_blink_start 100
+  10.027 <-- timer_blink_start 100
+  10.027 <-- timer_blink: started, period 100 ms
+  12.008 --> timer_blink_stop
+  12.069 <-- timer_blink_stop
+  12.069 <-- timer_blink: stopped, 20 toggles
+  13.056 --> timer_blink_start 5
+  13.117 <-- timer_blink_start 5
+  13.117 <-- error: period_ms must be 10..60000
+  13.612 --> timer_blink_start
+  13.674 <-- timer_blink_start
+  13.674 <-- error: usage timer_blink_start [<period_ms>]
 итог: отправлено кадров 13, принято строк 57
