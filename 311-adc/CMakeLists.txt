@@ -23,6 +23,8 @@ add_library(platform STATIC platform/platform.c)
 target_include_directories(platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(platform PRIVATE pico_stdlib hardware_adc)
 
+
+
 add_library(logic STATIC
     logic/api/api.c
     logic/api/api-callbacks.c
@@ -31,7 +33,6 @@ add_library(logic STATIC
     logic/pi-task/pi-task.c
     logic/telemetry-task/telemetry-task.c
 )
-
 target_include_directories(logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/logic)
 target_link_libraries(logic PUBLIC stdio_text_protocol
     PRIVATE platform systime profiling device logging)

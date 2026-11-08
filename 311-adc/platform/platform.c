@@ -1,7 +1,7 @@
 #include "platform/platform.h"
+
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
-
 
 // вход АЦП: вывод GP26, канал 0
 #define ADC_PIN 26
@@ -14,8 +14,12 @@
 #define ADC_LEVELS 4096
 #define RC_CHARGE_PIN 22
 
+
+
 static const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 static const uint BUTTON_PINS[PLATFORM_BUTTON_QTY] = {15, 14};
+
+
 
 
 void platform_init(void)
@@ -33,14 +37,6 @@ void platform_init(void)
         gpio_pull_up(BUTTON_PINS[(uint)j]);
     }
 
-
-    adc_init();
-    adc_gpio_init(ADC_PIN);
-    adc_set_temp_sensor_enabled(true);  //включить питание датчика температуры чипа
-
-    gpio_init(RC_CHARGE_PIN);
-    gpio_set_dir(RC_CHARGE_PIN, GPIO_OUT);
-    gpio_put(RC_CHARGE_PIN, false);
 
 }
 

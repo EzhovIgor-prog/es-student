@@ -11,6 +11,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 
+
 #if PROFILING_ENABLED
 #include "profiling/profiling.h"
 #endif
@@ -40,6 +41,8 @@ int main()
     
     led_task_init();
     stdio_text_protocol_init();
+
+    
 
     #if PROFILING_ENABLED
     profiling_stopwatch_init(STOPWATCH_LOOP, "loop");
@@ -89,7 +92,7 @@ int main()
 
         pi_task_handle();
 
-        #if PROFILING_ENABLED
+       #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_PI);
         profiling_start(STOPWATCH_TELEMETRY);
         #endif
@@ -100,6 +103,5 @@ int main()
         profiling_stop(STOPWATCH_TELEMETRY);
         profiling_stop(STOPWATCH_LOOP);
         #endif
-
     }
 }

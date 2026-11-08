@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -16,7 +17,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 
-
+#define TELEMETRY_MIN_PERIOD_MS 10u
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -214,26 +215,19 @@ static void cmd_profiling_reset(const command_t *command)
     #endif
 }
 
-// напряжение на GP26 у platform, ответ voltage: <напряжение> V
 static void cmd_get_voltage(const command_t *command)
 {
-    printf("voltage: %.3f V\n", platform_voltage_read());
+    (void)command;
+    printf("voltage: %.3f V\r\n", platform_voltage_read());
 }
 
 static void cmd_get_temp(const command_t *command)
 {
-    printf("temp: %.1f C\n", platform_temp_read());
+    (void)command;
+    printf("temp: %.1f C\r\n", platform_temp_read());
 }
 
 
-void api_print_telemetry(const telemetry_record_t *record)
-{
-    if (record != NULL)
-    {
-        printf("tm: %llu %.3f %.1f\r\n", (unsigned long long)record->time_us,
-               (double)record->voltage_v, (double)record->temp_c);
-    }
-}
 
 static void cmd_tm_start(const command_t *command)
 {
@@ -244,12 +238,18 @@ static void cmd_tm_start(const command_t *command)
         printf("error: usage tm_start [<period_ms>]\r\n");
         return;
     }
-    if (!telemetry_task_start(period_ms))
+    if (period_ms < TELEMETRY_MIN_PERIOD_MS)
     {
-        printf("error: period_ms must be at least 10\r\n");
+        printf("error: period_ms must be at least %lu\r\n",
+               (unsigned long)TELEMETRY_MIN_PERIOD_MS);
         return;
     }
-    printf("telemetry: started, period %u ms\r\n", (unsigned)period_ms);
+    if (!telemetry_task_start(period_ms))
+    {
+        printf("error: failed to start telemetry\r\n");
+        return;
+    }
+    printf("telemetry: started, period %lu ms\r\n", (unsigned long)period_ms);
 }
 
 static void cmd_tm_stop(const command_t *command)
@@ -265,12 +265,24 @@ static void cmd_charge_on(const command_t *command)
     platform_charge_set(true);
     printf("charge: on\r\n");
 }
-    
+
 static void cmd_charge_off(const command_t *command)
 {
     (void)command;
     platform_charge_set(false);
     printf("charge: off\r\n");
+}
+
+void api_print_telemetry(const telemetry_record_t *record)
+{
+    
+    if (record != NULL)
+    {
+        printf("tm: %" PRIu64 " %.3f %.1f\r\n",
+               record->time_us,
+               (double)record->voltage_v,
+               (double)record->temp_c);
+    }
 }
 
 
@@ -287,12 +299,12 @@ const api_command_t api_commands[] = {
     {"led_blink", "LED blinking", cmd_led_blink},
     {"led_period", "set period: led_period <period_ms>", cmd_led_period},
     {"button", "button state and press count", cmd_button},
-    {"get_voltage", "voltage on GP26, ADC input 0", cmd_get_voltage},
-    {"get_temp", "chip temperature, degrees Celsius", cmd_get_temp },
-    {"tm_start", "start telemetry: tm_start [<period_ms>]", cmd_tm_start},
-    {"tm_stop", "stop telemetry", cmd_tm_stop},
-    {"charge_on", "charge RC circuit from GP22", cmd_charge_on},
-    {"charge_off", "discharge RC circuit through GP22", cmd_charge_off},
+    {"get_voltage",   "voltage on GP26 (ADC input 0)", cmd_get_voltage},
+    {"get_temp",      "chip temperature in Celsius", cmd_get_temp},
+    {"tm_start",      "start telemetry", cmd_tm_start},
+    {"tm_stop",       "stop telemetry", cmd_tm_stop},
+    {"charge_on",     "charge RC circuit (GP22)", cmd_charge_on},
+    {"charge_off",    "discharge RC circuit (GP22)", cmd_charge_off},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

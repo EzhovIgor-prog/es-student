@@ -6,12 +6,13 @@
 
 
 
-
-
 static telemetry_state_t telemetry_state;
 static uint32_t telemetry_period_ms;
 static uint64_t last_record_us;
 static telemetry_task_callback_t record_callback;
+
+
+
 
 
 // запомнить функцию для записей, состояние IDLE

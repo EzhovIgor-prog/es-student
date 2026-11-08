@@ -1,7 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
-
 
 typedef enum {
     TELEMETRY_STATE_IDLE,
