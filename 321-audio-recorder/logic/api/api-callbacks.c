@@ -218,12 +218,26 @@ static void cmd_profiling_reset(const command_t *command)
 static void cmd_get_voltage(const command_t *command)
 {
     (void)command;
+
+    if(platform_adc_busy() == true)
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
     printf("voltage: %.3f V\r\n", platform_voltage_read());
 }
 
 static void cmd_get_temp(const command_t *command)
 {
     (void)command;
+
+    if(platform_adc_busy() == true)
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
     printf("temp: %.1f C\r\n", platform_temp_read());
 }
 
@@ -231,6 +245,12 @@ static void cmd_get_temp(const command_t *command)
 
 static void cmd_tm_start(const command_t *command)
 {
+    if(platform_adc_busy() == true)
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
     uint32_t period_ms = TELEMETRY_DEFAULT_PERIOD_MS;
     if (command->argc > 1 ||
         (command->argc == 1 && !parse_u32(command->argv[0], &period_ms)))
@@ -322,26 +342,114 @@ static void cmd_timer_blink_stop(const command_t *command)
 
 
 
+
+// cmd_cap_start(): аргументов не два или не числа — error: usage cap_start <N> <period_us>
+// N = 0, N > PLATFORM_CAPTURE_MAX или период меньше 10 мкс —
+//     error: N must be 1..2000, period_us at least 10
+// идёт телеметрия или platform не начал захват — error: adc busy
+// ответ capture: started, <N> samples, period <период> us
+
+// cmd_cap_dump(): захвата не было — error: no capture
+// строка capture: <N> samples, period <период> us, interval <мин>..<макс> us, handler <доля> %
+// коды строками cap: по 16
+
+// get_voltage, get_temp, tm_start: АЦП занят — error: adc busy
+
+static void cmd_cap_start(const command_t *command)
+{
+    if(telemetry_task_get_state() == TELEMETRY_STATE_RUN)
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
+    uint32_t capt_count = 0;
+    uint32_t capt_period_us = 0;
+
+     if (command->argc != 2  || (command->argc == 2 && !parse_u32(command->argv[0], &capt_count))|| (command->argc == 2 && !parse_u32(command->argv[1], &capt_period_us)))
+    //if (command->argc != 2  || (parse_u32(command->argv[0], &capt_count) == false)|| (parse_u32(command->argv[1], &capt_period_us) == false))
+    
+    {
+        printf("error: usage cap_start <N> <period_us>\r\n");
+        return;
+    }
+
+     //printf("capture: started, %lu samples, period %lu us\r\n", (unsigned long)capt_count, (unsigned long)capt_period_us);
+
+
+    if(platform_capture_start(capt_count, capt_period_us) == false)
+    {
+        printf("error: N must be 1..2000, period_us at least 10\r\n");
+        return;
+    }
+
+    printf("capture: started, %lu samples, period %lu us\r\n", (unsigned long)capt_count, (unsigned long)capt_period_us);
+    
+}
+
+
+static void cmd_cap_dump(const command_t *command)
+{
+
+    platform_capture_t capture_data;
+    platform_capture_get(&capture_data);
+
+
+    if(platform_capture_done() == false)
+    {
+        printf("error: no capture\r\n");
+        return;
+    }
+
+    printf("capture: %lu samples, period %lu us, interval %lu ... %lu us, handler %3.1f %%\r\n", 
+                                    (unsigned long)capture_data.count, 
+                                    (unsigned long)capture_data.period_us,
+                                    (unsigned long)capture_data.min_interval_us,
+                                    (unsigned long)capture_data.max_interval_us,
+                                    (float)capture_data.handler_percent);
+   
+        
+        printf("cap: ");
+
+        uint8_t j=0;
+
+        for(uint16_t i=0; i< capture_data.count; i++)
+        {
+            printf("%lu ", (unsigned long)(*(capture_data.samples + i)));    
+
+            if(++j >= 12 )
+            {
+                j = 0;
+                printf("\r\n");
+            }
+        }
+        printf("\r\n");
+
+}
+
+
 const api_command_t api_commands[] = {
-    {"info", "device passport", cmd_info},
-    {"uptime", "time since reset", cmd_uptime}, 
-    {"pi_start", "start calculation: pi_start [<terms>]", cmd_pi_start},
-    {"pi", "calculation state or result", cmd_pi},
-    {"profiling", "stopwatch results", cmd_profiling},
-    {"profiling_reset", "reset stopwatches", cmd_profiling_reset},
-    {"led_enable", "LED on", cmd_led_enable},
-    {"led_disable", "LED off", cmd_led_disable},
-    {"led_blink", "LED blinking", cmd_led_blink},
-    {"led_period", "set period: led_period <period_ms>", cmd_led_period},
-    {"button", "button state and press count", cmd_button},
-    {"get_voltage",   "voltage on GP26 (ADC input 0)", cmd_get_voltage},
-    {"get_temp",      "chip temperature in Celsius", cmd_get_temp},
-    {"tm_start",      "start telemetry", cmd_tm_start},
-    {"tm_stop",       "stop telemetry", cmd_tm_stop},
-    {"charge_on",     "charge RC circuit (GP22)", cmd_charge_on},
-    {"charge_off",    "discharge RC circuit (GP22)", cmd_charge_off},
-    {"timer_blink_start", "blink led by timer: timer_blink_start <period_ms>", cmd_timer_blink_start},
-    {"timer_blink_stop", "stop timer blink, number of toggles", cmd_timer_blink_stop},
+    {"info",                "device passport", cmd_info},
+    {"uptime",              "time since reset", cmd_uptime}, 
+    {"pi_start",            "start calculation: pi_start [<terms>]", cmd_pi_start},
+    {"pi",                  "calculation state or result", cmd_pi},
+    {"profiling",           "stopwatch results", cmd_profiling},
+    {"profiling_reset",     "reset stopwatches", cmd_profiling_reset},
+    {"led_enable",          "LED on", cmd_led_enable},
+    {"led_disable",         "LED off", cmd_led_disable},
+    {"led_blink",           "LED blinking", cmd_led_blink},
+    {"led_period",          "set period: led_period <period_ms>", cmd_led_period},
+    {"button",              "button state and press count", cmd_button},
+    {"get_voltage",         "voltage on GP26 (ADC input 0)", cmd_get_voltage},
+    {"get_temp",            "chip temperature in Celsius", cmd_get_temp},
+    {"tm_start",            "start telemetry", cmd_tm_start},
+    {"tm_stop",             "stop telemetry", cmd_tm_stop},
+    {"charge_on",           "charge RC circuit (GP22)", cmd_charge_on},
+    {"charge_off",          "discharge RC circuit (GP22)", cmd_charge_off},
+    {"timer_blink_start",   "blink led by timer: timer_blink_start <period_ms>", cmd_timer_blink_start},
+    {"timer_blink_stop",    "stop timer blink, number of toggles", cmd_timer_blink_stop},
+    {"cap_start",           "capture start <N>, <period_us>", cmd_cap_start},
+    {"cap_dump",            "capture resultate", cmd_cap_dump},
 
 };
 

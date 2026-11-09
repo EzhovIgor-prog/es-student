@@ -83,7 +83,7 @@ int main()
         profiling_start(STOPWATCH_LED);
         #endif
 
-        led_task_handle();
+        //led_task_handle();
 
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_LED);
