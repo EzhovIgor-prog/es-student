@@ -420,7 +420,7 @@ static void cmd_cap_dump(const command_t *command)
             if(++j >= 16)
             {
                 j = 0;
-                printf("\r\n");
+                printf(" ");
             }
         }
         printf("\r\n");
