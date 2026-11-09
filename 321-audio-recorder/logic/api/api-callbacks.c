@@ -417,7 +417,7 @@ static void cmd_cap_dump(const command_t *command)
         {
             printf("%lu ", (unsigned long)(*(capture_data.samples + i)));    
 
-            if(++j >= 12 )
+            if(++j >= 16)
             {
                 j = 0;
                 printf("\r\n");
