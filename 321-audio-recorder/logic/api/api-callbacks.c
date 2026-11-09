@@ -401,7 +401,7 @@ static void cmd_cap_dump(const command_t *command)
         return;
     }
 
-    printf("capture: %lu samples, period %lu us, interval %lu ... %lu us, handler %3.1f %%\r\n", 
+    printf("capture: %lu samples, period %lu us, interval %lu..%lu us, handler %3.1f %%\r\n", 
                                     (unsigned long)capture_data.count, 
                                     (unsigned long)capture_data.period_us,
                                     (unsigned long)capture_data.min_interval_us,
