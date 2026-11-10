@@ -455,7 +455,7 @@ void print_dma_cap(const uint16_t *samples, uint32_t count, uint32_t time_us)
     time_expected =  time_expected / PLATFORM_SAMPLE_RATE_HZ;
 
 
-    printf("dma_cap: %lu samples in %lu us, expected in %lu us,  min %lu max %lu mean %5.1f\r\n", 
+    printf("dma_cap: %lu samples in %lu us, expected %lu us, min %lu max %lu mean %5.1f\r\n", 
                                     (unsigned long) count,
                                     (unsigned long) time_us,
                                     (unsigned long) time_expected,
@@ -519,7 +519,7 @@ const api_command_t api_commands[] = {
     {"timer_blink_stop",    "stop timer blink, number of toggles", cmd_timer_blink_stop},
     {"cap_start",           "capture start <N>, <period_us>", cmd_cap_start},
     {"cap_dump",            "capture resultate", cmd_cap_dump},
-    {"dma_cap",             "capture resultate by dma", cmd_dma_cap},
+    {"dma_cap",             "dma capture start <N>", cmd_dma_cap},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);
