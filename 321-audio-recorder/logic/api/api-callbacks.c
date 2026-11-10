@@ -16,6 +16,8 @@
 #include "firmware.h"
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
+#include "block-task/block-task.h"
+
 
 #define TELEMETRY_MIN_PERIOD_MS 10u
 
@@ -427,6 +429,73 @@ static void cmd_cap_dump(const command_t *command)
 
 }
 
+void print_dma_cap(const uint16_t *samples, uint32_t count, uint32_t time_us)
+{
+    const uint16_t *pData = samples;
+    uint16_t data_min = *pData;
+    uint16_t data_max = *pData;
+    uint32_t  data_summ = 0;  
+    uint64_t time_expected = 0;
+
+    for(uint16_t i = 0; i< count; i++)
+    {
+        data_summ += *pData;
+        if(*pData < data_min)  data_min = *pData;
+        if(*pData > data_max)  data_max = *pData;
+
+        pData++;
+    }
+
+    float data_mean = (float) data_summ / (float) count;
+
+    // расчёт времени — count * 1000000 / PLATFORM_SAMPLE_RATE_HZ
+
+    time_expected = (count * 500000);
+    time_expected += (count * 500000);
+    time_expected =  time_expected / PLATFORM_SAMPLE_RATE_HZ;
+
+
+    printf("dma_cap: %lu samples in %lu us, expected in %lu us,  min %lu max %lu mean %5.1f\r\n", 
+                                    (unsigned long) count,
+                                    (unsigned long) time_us,
+                                    (unsigned long) time_expected,
+                                    (unsigned long) data_min,
+                                    (unsigned long) data_max,
+                                    (float) data_mean);
+
+ 
+    
+}
+
+
+static void cmd_dma_cap(const command_t *command)
+{
+    
+    uint32_t dma_capt_count = 0;
+
+    if (command->argc != 1 || (command->argc == 1 && !parse_u32(command->argv[0], &dma_capt_count)))
+    {
+        printf("error: usage dma_cap <N>\r\n");
+        return;
+    }
+
+    if((dma_capt_count < 1) || (dma_capt_count > PLATFORM_BLOCK_MAX))
+    {
+
+        printf("error: N must be 1..8192\r\n");
+        return;
+
+    } 
+    
+    if((telemetry_task_get_state() == TELEMETRY_STATE_RUN) || (!block_task_start(dma_capt_count,  print_dma_cap)))
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
+
+}
+
 
 const api_command_t api_commands[] = {
     {"info",                "device passport", cmd_info},
@@ -450,7 +519,7 @@ const api_command_t api_commands[] = {
     {"timer_blink_stop",    "stop timer blink, number of toggles", cmd_timer_blink_stop},
     {"cap_start",           "capture start <N>, <period_us>", cmd_cap_start},
     {"cap_dump",            "capture resultate", cmd_cap_dump},
-
+    {"dma_cap",             "capture resultate by dma", cmd_dma_cap},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

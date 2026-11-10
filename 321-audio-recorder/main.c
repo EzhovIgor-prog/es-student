@@ -10,7 +10,7 @@
 #include "firmware.h"
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
-
+#include "block-task/block-task.h"
 
 #if PROFILING_ENABLED
 #include "profiling/profiling.h"
@@ -25,6 +25,7 @@ typedef enum
     STOPWATCH_BUTTON,
     STOPWATCH_PI,
     STOPWATCH_TELEMETRY,
+    STOPWATCH_BLOCK,
 } stopwatch_id_t;
 
 
@@ -51,6 +52,7 @@ int main()
     profiling_stopwatch_init(STOPWATCH_BUTTON, "button");
     profiling_stopwatch_init(STOPWATCH_PI, "pi");
     profiling_stopwatch_init(STOPWATCH_TELEMETRY, "telemetry");
+    profiling_stopwatch_init(STOPWATCH_BLOCK, "block");
     #endif
 
     LOG_INF("%s %s\n", FIRMWARE_NAME, FIRMWARE_VERSION);
@@ -83,7 +85,7 @@ int main()
         profiling_start(STOPWATCH_LED);
         #endif
 
-        //led_task_handle();
+        led_task_handle();
 
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_LED);
@@ -101,6 +103,14 @@ int main()
 
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_TELEMETRY);
+        profiling_start(STOPWATCH_BLOCK);
+        #endif
+
+        block_task_handle();
+
+
+        #if PROFILING_ENABLED
+        profiling_stop(STOPWATCH_BLOCK);
         profiling_stop(STOPWATCH_LOOP);
         #endif
     }
