@@ -44,7 +44,6 @@ int main()
     stdio_text_protocol_init();
 
     
-
     #if PROFILING_ENABLED
     profiling_stopwatch_init(STOPWATCH_LOOP, "loop");
     profiling_stopwatch_init(STOPWATCH_COMMAND, "command");
