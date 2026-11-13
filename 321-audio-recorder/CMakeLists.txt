@@ -21,7 +21,7 @@ target_compile_definitions(profiling PUBLIC
 
 add_library(platform STATIC platform/platform.c)
 target_include_directories(platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(platform PRIVATE pico_stdlib hardware_adc hardware_dma)
+target_link_libraries(platform PRIVATE pico_stdlib hardware_adc hardware_dma hardware_pwm hardware_clocks hardware_irq hardware_watchdog)
 
 
 
@@ -33,6 +33,7 @@ add_library(logic STATIC
     logic/pi-task/pi-task.c
     logic/telemetry-task/telemetry-task.c
     logic/block-task/block-task.c
+    logic/stream-task/stream-task.c
 )
 target_include_directories(logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/logic)
 target_link_libraries(logic PUBLIC stdio_text_protocol

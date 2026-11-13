@@ -17,9 +17,16 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 #include "block-task/block-task.h"
+#include "stream-task./stream-task.h"
 
 
 #define TELEMETRY_MIN_PERIOD_MS 10u
+#define STREAM_BLINK_PERIOD_MS 250  // период индикатора записи во время потока
+
+
+
+
+
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -497,6 +504,60 @@ static void cmd_dma_cap(const command_t *command)
 }
 
 
+static bool input_reserved(void)
+{
+    return platform_adc_busy() || (telemetry_task_get_state() == TELEMETRY_STATE_RUN);
+}
+
+static void print_busy(void) { printf("error: adc busy\r\n"); }
+
+
+void api_send_frame(const stream_header_t *header, const uint8_t *data, uint32_t bytes)
+{
+    // байты заголовка и отсчётов как они лежат в памяти
+    platform_write(header, sizeof(*header));
+    platform_write(data, bytes);
+}
+
+
+
+static void cmd_stream_start(const command_t *command)
+{
+    uint32_t bits = 16;
+    if (command->argc > 1 ||
+        (command->argc == 1 && !parse_u32(command->argv[0], &bits)) ||
+        (bits != 8 && bits != 16))
+    {
+        printf("error: usage stream_start [8|16]\r\n");
+        return;
+    }
+    if (input_reserved() || !stream_task_start((uint8_t)bits)) { print_busy(); return; }
+    if (!platform_blink_start(STREAM_BLINK_PERIOD_MS))
+    {
+        stream_task_stop();
+        printf("error: timer unavailable\r\n");
+        return;
+    }
+    led_task_set_state(LED_STATE_OFF);
+    printf("stream: started, 44100 Hz, %u bit\r\n", (unsigned)bits);
+}
+
+static void cmd_stream_stop(const command_t *command)
+{
+    (void)command;
+    if (stream_task_get_state() == STREAM_STATE_RUN)
+    {
+        stream_task_stop();
+        platform_blink_stop();
+    }
+    printf("stream: stopped, %u frames, %u samples, %u overruns\r\n",
+           (unsigned)stream_task_get_frames(), (unsigned)stream_task_get_samples(),
+           (unsigned)stream_task_get_overruns());
+}
+
+
+
+
 const api_command_t api_commands[] = {
     {"info",                "device passport", cmd_info},
     {"uptime",              "time since reset", cmd_uptime}, 
@@ -520,6 +581,9 @@ const api_command_t api_commands[] = {
     {"cap_start",           "capture start <N>, <period_us>", cmd_cap_start},
     {"cap_dump",            "capture resultate", cmd_cap_dump},
     {"dma_cap",             "dma capture start <N>", cmd_dma_cap},
+    {"stream_start",        "start stream: stream_start", cmd_stream_start},
+    {"stream_stop",         "stop stream, report counters", cmd_stream_stop},
+    
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

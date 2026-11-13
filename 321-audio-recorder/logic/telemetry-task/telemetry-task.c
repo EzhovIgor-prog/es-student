@@ -18,6 +18,8 @@ static telemetry_task_callback_t record_callback;
 // запомнить функцию для записей, состояние IDLE
 void telemetry_task_init(telemetry_task_callback_t on_record)
 {
+    if(on_record == NULL) return;
+
     telemetry_state = TELEMETRY_STATE_IDLE;
     telemetry_period_ms = 100;
     record_callback = on_record;

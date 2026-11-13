@@ -1,9 +1,19 @@
 #include "platform/platform.h"
 
 #include "pico/stdlib.h"
+#include "pico/stdio.h"
 #include "hardware/adc.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
+
+#include "hardware/pwm.h"
+#include "hardware/sync.h"
+#include "hardware/watchdog.h"
+#include "hardware/structs/watchdog.h"
+#include <string.h>
+
+
+
 
 
 // вход АЦП: вывод GP26, канал 0
@@ -30,6 +40,7 @@ typedef enum {
     ADC_FREE,
     ADC_CAPTURE,
     ADC_BLOCK,
+    ADC_STREAM,
 } adc_user_t;
 
 static volatile adc_user_t adc_user;
@@ -55,22 +66,59 @@ static uint32_t block_start_us;
 static volatile uint32_t block_end_us;
 static volatile bool block_ready;
 
+
+static int stream_channels[2];
+// 1024-byte write rings also keep DMA inside its buffer if an IRQ arrives late.
+static uint8_t stream_buffers[2][PLATFORM_STREAM_BYTES] __attribute__((aligned(1024)));
+static uint8_t stream_snapshot[PLATFORM_STREAM_BYTES];
+static volatile bool stream_ready[2];
+static volatile uint32_t stream_numbers[2], stream_overruns;
+static uint32_t stream_samples, stream_produced;
+static uint32_t stream_irq_index, stream_claimed, stream_claimed_number;
+
+
+
+
 // АЦП в непрерывном режиме с шагом 44,1 кГц, буфер АЦП с запросом DMA
 // на каждый отсчёт
-static void adc_free_running(void)
+static void adc_free_running(bool bits8)
 {
     adc_select_input(ADC_CHANNEL);
-    adc_fifo_setup(true, true, 1, false, false);
+    adc_fifo_setup(true, true, 1, false, bits8);
     adc_set_clkdiv(ADC_CLOCK_HZ / PLATFORM_SAMPLE_RATE_HZ - 1);
 }
 
-// АЦП обратно в режим отсчётов по команде
 static void adc_one_shot(void)
 {
     adc_run(false);
     adc_fifo_drain();
     adc_fifo_setup(false, false, 0, false, false);
     adc_set_clkdiv(0);
+}
+
+
+static void on_stream_buffer(void)
+{
+    // If both interrupts are pending, process them in acquisition order.
+    for (uint i = 0; i < 2; ++i)
+    {
+        uint index = stream_irq_index;
+        int channel = stream_channels[index];
+        if (!dma_channel_get_irq0_status(channel)) break;
+        dma_channel_acknowledge_irq0(channel);
+        if (!dma_channel_is_busy(channel))
+            dma_channel_set_write_addr(channel, stream_buffers[index], false);
+        uint next = index ^ 1u;
+        if (stream_ready[next])
+        {
+            ++stream_overruns;
+            stream_ready[next] = false;
+        }
+        stream_numbers[index] = stream_produced++;
+        __dmb();
+        stream_ready[index] = true;
+        stream_irq_index = next;
+    }
 }
 
 
@@ -91,7 +139,7 @@ bool platform_block_start(uint32_t count)
         return false;
     }
 
-    adc_free_running();
+    adc_free_running(false);
 
     // 16-битные передачи из одного адреса в растущий, по запросу АЦП
     dma_channel_config cfg = dma_channel_get_default_config(block_channel);
@@ -141,32 +189,7 @@ uint32_t platform_block_time_us(void)
 
 
 
-void platform_init(void)
-{
-    stdio_init_all();
 
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
-    gpio_put(LED_PIN, false);
-
-    for (platform_button_t j = 0; j < PLATFORM_BUTTON_QTY; j++)
-    {
-        gpio_init(BUTTON_PINS[(uint)j]);
-        gpio_set_dir(BUTTON_PINS[(uint)j], GPIO_IN);
-        gpio_pull_up(BUTTON_PINS[(uint)j]);
-    }
-
-    adc_init();
-    adc_gpio_init(ADC_PIN);
-
-
-    // канал блока сообщает о конце через DMA_IRQ_1
-    block_channel = dma_claim_unused_channel(true);
-    dma_channel_set_irq1_enabled(block_channel, true);
-    irq_set_exclusive_handler(DMA_IRQ_1, on_block_done);
-    irq_set_enabled(DMA_IRQ_1, true);
-
-}
 
 
 void platform_led_set(bool on)
@@ -344,3 +367,149 @@ void platform_capture_get(platform_capture_t *capture)
 
 }
 
+
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// обработчик прерывания DMA_IRQ_0: канал заполнил свой буфер
+
+
+bool platform_stream_start(uint8_t bits)
+{
+    if (platform_adc_busy() || (bits != 8 && bits != 16)) return false;
+    bool bits8 = bits == 8;
+    stream_samples = bits8 ? PLATFORM_STREAM_BYTES : PLATFORM_STREAM_BYTES / 2;
+    adc_free_running(bits8);
+    stream_overruns = stream_produced = stream_irq_index = 0;
+    for (uint i = 0; i < 2; ++i)
+    {
+        int channel = stream_channels[i];
+        dma_channel_config cfg = dma_channel_get_default_config(channel);
+        channel_config_set_transfer_data_size(&cfg, bits8 ? DMA_SIZE_8 : DMA_SIZE_16);
+        channel_config_set_read_increment(&cfg, false);
+        channel_config_set_write_increment(&cfg, true);
+        channel_config_set_dreq(&cfg, DREQ_ADC);
+        channel_config_set_ring(&cfg, true, 10);
+        channel_config_set_chain_to(&cfg, stream_channels[i ^ 1u]);
+        dma_channel_configure(channel, &cfg, stream_buffers[i], &adc_hw->fifo,
+                              stream_samples, false);
+        stream_ready[i] = false;
+        dma_channel_acknowledge_irq0(channel);
+        dma_channel_set_irq0_enabled(channel, true);
+    }
+    adc_user = ADC_STREAM;
+    dma_channel_start(stream_channels[0]);
+    adc_run(true);
+    return true;
+}
+
+void platform_stream_stop(void)
+{
+    if (adc_user != ADC_STREAM) return;
+    adc_run(false);
+    uint32_t irq_state = save_and_disable_interrupts();
+    // Break both chains before aborting either channel (RP2040-E13).
+    for (uint i = 0; i < 2; ++i)
+    {
+        int channel = stream_channels[i];
+        dma_channel_set_irq0_enabled(channel, false);
+        dma_channel_config cfg = dma_get_channel_config(channel);
+        channel_config_set_chain_to(&cfg, channel);
+        dma_channel_set_config(channel, &cfg, false);
+    }
+    restore_interrupts(irq_state);
+    for (uint i = 0; i < 2; ++i)
+    {
+        dma_channel_abort(stream_channels[i]);
+        dma_channel_acknowledge_irq0(stream_channels[i]);
+        stream_ready[i] = false;
+    }
+    adc_one_shot();
+    adc_user = ADC_FREE;
+}
+
+const uint8_t *platform_stream_next(uint32_t *samples)
+{
+    if (adc_user != ADC_STREAM) return NULL;
+    uint32_t irq_state = save_and_disable_interrupts();
+    uint index = stream_ready[0] ? 0 : 1;
+    uint32_t number = stream_numbers[index];
+    bool ready = stream_ready[index] && !dma_channel_is_busy(stream_channels[index]);
+    restore_interrupts(irq_state);
+    if (!ready) return NULL;
+
+    // A stable snapshot prevents USB from reading memory that DMA is refilling.
+    memcpy(stream_snapshot, stream_buffers[index], sizeof stream_snapshot);
+    __dmb();
+    irq_state = save_and_disable_interrupts();
+    ready = stream_ready[index] && stream_numbers[index] == number &&
+            !dma_channel_is_busy(stream_channels[index]) &&
+            !dma_channel_get_irq0_status(stream_channels[index]);
+    restore_interrupts(irq_state);
+    if (!ready) return NULL;
+    stream_claimed = index;
+    stream_claimed_number = number;
+    *samples = stream_samples;
+    return stream_snapshot;
+}
+
+uint32_t platform_stream_sequence(void) 
+{ 
+    return stream_claimed_number; 
+}
+
+void platform_stream_release(void)
+{
+    uint32_t irq_state = save_and_disable_interrupts();
+    if (stream_numbers[stream_claimed] == stream_claimed_number)
+        stream_ready[stream_claimed] = false;
+    restore_interrupts(irq_state);
+}
+
+uint32_t platform_stream_overruns(void) 
+{ 
+    return stream_overruns; 
+}
+
+void platform_write(const void *data, uint32_t bytes)
+{
+    stdio_put_string((const char *)data, (int)bytes, false, false);
+}
+
+
+
+
+
+void platform_init(void)
+{
+    stdio_init_all();
+    
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    gpio_put(LED_PIN, false);
+
+    for (platform_button_t j = 0; j < PLATFORM_BUTTON_QTY; j++)
+    {
+        gpio_init(BUTTON_PINS[(uint)j]);
+        gpio_set_dir(BUTTON_PINS[(uint)j], GPIO_IN);
+        gpio_pull_up(BUTTON_PINS[(uint)j]);
+    }
+
+    adc_init();
+    adc_gpio_init(ADC_PIN);
+
+
+    // канал блока сообщает о конце через DMA_IRQ_1
+    block_channel = dma_claim_unused_channel(true);
+    dma_channel_set_irq1_enabled(block_channel, true);
+    irq_set_exclusive_handler(DMA_IRQ_1, on_block_done);
+    irq_set_enabled(DMA_IRQ_1, true);
+
+    stream_overruns = 0;
+    stream_channels[0] = dma_claim_unused_channel(true);
+    stream_channels[1] = dma_claim_unused_channel(true);
+    irq_set_exclusive_handler(DMA_IRQ_0, on_stream_buffer);
+    irq_set_enabled(DMA_IRQ_0, true);
+    
+
+}

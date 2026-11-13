@@ -11,6 +11,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 #include "block-task/block-task.h"
+#include "stream-task./stream-task.h"
 
 #if PROFILING_ENABLED
 #include "profiling/profiling.h"
@@ -26,6 +27,7 @@ typedef enum
     STOPWATCH_PI,
     STOPWATCH_TELEMETRY,
     STOPWATCH_BLOCK,
+    STOPWATCH_STREAM,
 } stopwatch_id_t;
 
 
@@ -42,8 +44,9 @@ int main()
     
     led_task_init();
     stdio_text_protocol_init();
-
+    stream_task_init(api_send_frame);
     
+
     #if PROFILING_ENABLED
     profiling_stopwatch_init(STOPWATCH_LOOP, "loop");
     profiling_stopwatch_init(STOPWATCH_COMMAND, "command");
@@ -52,6 +55,7 @@ int main()
     profiling_stopwatch_init(STOPWATCH_PI, "pi");
     profiling_stopwatch_init(STOPWATCH_TELEMETRY, "telemetry");
     profiling_stopwatch_init(STOPWATCH_BLOCK, "block");
+    profiling_stopwatch_init(STOPWATCH_STREAM, "stream");
     #endif
 
     LOG_INF("%s %s\n", FIRMWARE_NAME, FIRMWARE_VERSION);
@@ -110,6 +114,13 @@ int main()
 
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_BLOCK);
+        profiling_start(STOPWATCH_STREAM);
+        #endif
+
+        stream_task_handle();
+
+        #if PROFILING_ENABLED
+        profiling_stop(STOPWATCH_STREAM);
         profiling_stop(STOPWATCH_LOOP);
         #endif
     }
