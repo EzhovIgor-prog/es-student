@@ -11,7 +11,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 #include "block-task/block-task.h"
-#include "stream-task./stream-task.h"
+#include "stream-task/stream-task.h"
 
 #if PROFILING_ENABLED
 #include "profiling/profiling.h"

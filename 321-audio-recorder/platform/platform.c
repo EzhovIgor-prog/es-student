@@ -498,7 +498,6 @@ void platform_init(void)
     adc_init();
     adc_gpio_init(ADC_PIN);
 
-
     // канал блока сообщает о конце через DMA_IRQ_1
     block_channel = dma_claim_unused_channel(true);
     dma_channel_set_irq1_enabled(block_channel, true);

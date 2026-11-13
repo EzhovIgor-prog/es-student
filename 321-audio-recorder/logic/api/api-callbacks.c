@@ -17,7 +17,7 @@
 #include "platform/platform.h"
 #include "telemetry-task/telemetry-task.h"
 #include "block-task/block-task.h"
-#include "stream-task./stream-task.h"
+#include "stream-task/stream-task.h"
 
 
 #define TELEMETRY_MIN_PERIOD_MS 10u

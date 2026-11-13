@@ -13,6 +13,7 @@ void stream_task_init(stream_task_callback_t on_frame)
     state = STREAM_STATE_IDLE;
     stream_bits = 16;
     frames = samples_total = 0;
+    
 }
 
 bool stream_task_start(uint8_t bits)
