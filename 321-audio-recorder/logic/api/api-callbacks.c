@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "device/device.h"
 #include "profiling/profiling.h"
 #include "led-task/led-task.h"
@@ -23,10 +24,11 @@
 #define TELEMETRY_MIN_PERIOD_MS 10u
 #define STREAM_BLINK_PERIOD_MS 250  // период индикатора записи во время потока
 
+// окно mic_level по умолчанию и окно mic_bias
+#define MIC_DEFAULT_WINDOW_MS 100
 
 
-
-
+static uint32_t mic_window_ms;
 
 
 
@@ -602,6 +604,89 @@ static void cmd_reset_reason(const command_t *command)
 }
 
 
+// среднее и отклонение от среднего в кодах АЦП: среднеквадратичное и наибольшее
+static void block_stats(const uint16_t *samples, uint32_t count, float *mean, float *rms, float *peak)
+{
+    uint32_t sum = 0;
+    for (uint32_t i = 0; i < count; i++)
+    {
+        sum += samples[i];
+    }
+    int32_t center = (int32_t)(sum / count);
+
+    // в целых числах: в float на 8192 отсчётах ядро считало бы в 24 раза дольше
+    uint64_t squares = 0;
+    uint32_t largest = 0;
+    for (uint32_t i = 0; i < count; i++)
+    {
+        int32_t deviation = (int32_t)samples[i] - center;
+        uint32_t size = deviation < 0 ? -deviation : deviation;
+        squares += (uint64_t)(deviation * deviation);
+        if (size > largest)
+        {
+            largest = size;
+        }
+    }
+
+    *mean = (float)sum / count;
+    *rms = sqrtf((float)squares / count);
+    *peak = (float)largest;
+}
+
+
+void print_mic_bias(const uint16_t *samples, uint32_t count, uint32_t elapsed)
+{
+    (void)elapsed;
+    uint32_t sum = 0;
+    for (uint32_t i = 0; i < count; ++i) sum += samples[i];
+    printf("mic: bias %.3f V\r\n", (double)platform_adc_volts((float)sum / count));
+}
+
+void print_mic_level(const uint16_t *samples, uint32_t count, uint32_t elapsed)
+{
+    (void)elapsed;
+    float mean;
+    float rms;
+    float peak;
+    block_stats((const uint16_t *)samples, count, &mean, &rms, &peak);
+
+    printf("mic: level %.1f mV rms, peak %.1f mV, %u ms\r\n",
+           1000.0 * platform_adc_volts(rms), 1000.0 * platform_adc_volts(peak),
+           (unsigned)mic_window_ms);
+}
+
+static void cmd_mic_bias(const command_t *command)
+{
+    (void)command;
+    if (input_reserved() ||
+        !block_task_start(PLATFORM_SAMPLE_RATE_HZ * MIC_DEFAULT_WINDOW_MS / 1000,
+                          print_mic_bias)) print_busy();
+}
+
+static void cmd_mic_level(const command_t *command)
+{
+    uint32_t ms = MIC_DEFAULT_WINDOW_MS;
+    if (command->argc > 1 ||
+        (command->argc == 1 && !parse_u32(command->argv[0], &ms)))
+    {
+        printf("error: usage mic_level [<ms>]\r\n");
+        return;
+    }
+    if (ms < 1 || ms > 185)
+    {
+        printf("error: ms must be 1..185\r\n");
+        return;
+    }
+    if (input_reserved() || !block_task_start(PLATFORM_SAMPLE_RATE_HZ * ms / 1000, print_mic_level))
+    {
+        print_busy();
+        return;
+    }
+    mic_window_ms = ms;
+}
+
+
+
 
 const api_command_t api_commands[] = {
     {"info",                "device passport", cmd_info},
@@ -632,6 +717,8 @@ const api_command_t api_commands[] = {
     {"wdt_enable",          "enable watchdog: wdt_enable <timeout_ms>", cmd_wdt_enable},
     {"hang",                "stop superloop to test the watchdog", cmd_hang},
     {"reset_reason",        "reason and consecutive watchdog restarts", cmd_reset_reason},
+    {"mic_bias",            "microphone DC bias in volts", cmd_mic_bias},
+    {"mic_level",           "microphone level: mic_level [<ms>]", cmd_mic_level},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

@@ -86,6 +86,11 @@ static bool watchdog_reset, watchdog_enabled;
 static uint32_t watchdog_restarts;
 
 
+float platform_adc_volts(float code) 
+{ 
+    return code * ADC_VREF_V / ADC_LEVELS; 
+}
+
 
 // АЦП в непрерывном режиме с шагом 44,1 кГц, буфер АЦП с запросом DMA
 // на каждый отсчёт
@@ -213,14 +218,14 @@ bool platform_button_read(platform_button_t id)
 float platform_voltage_read(void)
 {
     adc_select_input(ADC_CHANNEL);
-    return adc_read() * ADC_VREF_V / ADC_LEVELS;
+    return platform_adc_volts(adc_read());
 }
 
 float platform_temp_read(void)
 {
     adc_select_input(ADC_TEMP_CHANNEL);
 
-    float u = (adc_read() * ADC_VREF_V) / ADC_LEVELS;
+    float u = platform_adc_volts(adc_read());
 
     return 27.0 - ((u - 0.706) / 0.001721);
 }
