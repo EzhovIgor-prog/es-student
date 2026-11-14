@@ -5,7 +5,7 @@
 #include "hardware/adc.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
-
+#include "hardware/clocks.h"
 #include "hardware/pwm.h"
 #include "hardware/sync.h"
 #include "hardware/watchdog.h"
@@ -15,6 +15,10 @@
 
 
 
+#define TONE_PIN 20
+
+// счёт ШИМ тона: делитель приводит clk_sys к 1 МГц, счётчик считает микросекунды
+#define TONE_COUNT_HZ 1000000
 
 // вход АЦП: вывод GP26, канал 0
 #define ADC_PIN 26
@@ -57,6 +61,7 @@ static volatile uint32_t capture_handler_us;
 
 
 
+
 // частота clk_adc, от неё делитель отсчитывает шаг
 #define ADC_CLOCK_HZ 48000000.0f
 
@@ -76,7 +81,7 @@ static volatile uint32_t stream_numbers[2], stream_overruns;
 static uint32_t stream_samples, stream_produced;
 static uint32_t stream_irq_index, stream_claimed, stream_claimed_number;
 
-
+static uint tone_slice;
 
 
 // АЦП в непрерывном режиме с шагом 44,1 кГц, буфер АЦП с запросом DMA
@@ -476,7 +481,19 @@ void platform_write(const void *data, uint32_t bytes)
     stdio_put_string((const char *)data, (int)bytes, false, false);
 }
 
-
+bool platform_tone_set(uint32_t freq_hz)
+{
+    if (freq_hz == 0)
+    {
+        pwm_set_gpio_level(TONE_PIN, 0);
+        return true;
+    }
+    if (freq_hz < 20 || freq_hz > 20000) return false;
+    uint32_t period = (TONE_COUNT_HZ + freq_hz / 2) / freq_hz;
+    pwm_set_wrap(tone_slice, period - 1);
+    pwm_set_gpio_level(TONE_PIN, period / 2);
+    return true;
+}
 
 
 
@@ -510,5 +527,11 @@ void platform_init(void)
     irq_set_exclusive_handler(DMA_IRQ_0, on_stream_buffer);
     irq_set_enabled(DMA_IRQ_0, true);
     
-
+    gpio_set_function(TONE_PIN, GPIO_FUNC_PWM);
+    tone_slice = pwm_gpio_to_slice_num(20);
+    pwm_set_clkdiv(tone_slice, (float)clock_get_hz(clk_sys) / TONE_COUNT_HZ);
+    pwm_set_wrap(tone_slice, 999);
+    pwm_set_gpio_level(TONE_PIN, 0);
+    pwm_set_enabled(tone_slice, true);
 }
+

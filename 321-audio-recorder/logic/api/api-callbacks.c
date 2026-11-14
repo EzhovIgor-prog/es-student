@@ -555,6 +555,21 @@ static void cmd_stream_stop(const command_t *command)
            (unsigned)stream_task_get_overruns());
 }
 
+static void cmd_generate_tone(const command_t *command)
+{
+    uint32_t freq;
+    if (command->argc != 1 || !parse_u32(command->argv[0], &freq))
+        printf("error: usage generate_tone <Hz>\r\n");
+    else if (!platform_tone_set(freq))
+        printf("error: Hz must be 0 or 20..20000\r\n");
+    else if (freq)
+        printf("tone: %u Hz\r\n", (unsigned)freq);
+    else
+        printf("tone: off\r\n");
+}
+
+
+
 
 
 
@@ -583,7 +598,8 @@ const api_command_t api_commands[] = {
     {"dma_cap",             "dma capture start <N>", cmd_dma_cap},
     {"stream_start",        "start stream: stream_start", cmd_stream_start},
     {"stream_stop",         "stop stream, report counters", cmd_stream_stop},
-    
+    {"generate_tone",       "PWM tone: generate_tone <Hz>", cmd_generate_tone},
+
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

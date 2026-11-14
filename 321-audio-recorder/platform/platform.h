@@ -90,4 +90,5 @@ uint32_t platform_stream_overruns(void);
 // отправляет байты в порт как есть, без замены \n на \r\n
 void platform_write(const void *data, uint32_t bytes);
 
+bool platform_tone_set(uint32_t freq_hz);
 
