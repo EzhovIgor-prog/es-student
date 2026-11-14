@@ -45,7 +45,7 @@ int main()
     led_task_init();
     stdio_text_protocol_init();
     stream_task_init(api_send_frame);
-    
+   
 
     #if PROFILING_ENABLED
     profiling_stopwatch_init(STOPWATCH_LOOP, "loop");
@@ -119,9 +119,13 @@ int main()
 
         stream_task_handle();
 
+        platform_watchdog_feed();
+
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_STREAM);
         profiling_stop(STOPWATCH_LOOP);
         #endif
+
+        
     }
 }

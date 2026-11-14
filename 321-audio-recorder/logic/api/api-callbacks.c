@@ -28,6 +28,8 @@
 
 
 
+
+
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
 static bool parse_u32(const char *text, uint32_t *value)
@@ -569,7 +571,35 @@ static void cmd_generate_tone(const command_t *command)
 }
 
 
+static void cmd_wdt_enable(const command_t *command)
+{
+    uint32_t timeout_ms;
+    if (command->argc != 1 || !parse_u32(command->argv[0], &timeout_ms))
+        printf("error: usage wdt_enable <timeout_ms>\r\n");
+    else if (!platform_watchdog_enable(timeout_ms))
+        printf("error: timeout_ms must be 1..8388\r\n");
+    else
+        printf("wdt: enabled, timeout %u ms\r\n", (unsigned)timeout_ms);
+}
 
+static void cmd_hang(const command_t *command)
+{
+    (void)command;
+    printf("hang: superloop stopped\r\n");
+    // суперцикл больше не идёт, прерывания приходят как прежде
+    while (1)
+    {
+    }
+}
+
+static void cmd_reset_reason(const command_t *command)
+{
+    (void)command;
+    uint32_t restarts;
+    bool watchdog = platform_watchdog_caused_reset(&restarts);
+    printf("reset: %s, restarts %u\r\n", watchdog ? "watchdog" : "other",
+           (unsigned)restarts);
+}
 
 
 
@@ -599,7 +629,9 @@ const api_command_t api_commands[] = {
     {"stream_start",        "start stream: stream_start", cmd_stream_start},
     {"stream_stop",         "stop stream, report counters", cmd_stream_stop},
     {"generate_tone",       "PWM tone: generate_tone <Hz>", cmd_generate_tone},
-
+    {"wdt_enable",          "enable watchdog: wdt_enable <timeout_ms>", cmd_wdt_enable},
+    {"hang",                "stop superloop to test the watchdog", cmd_hang},
+    {"reset_reason",        "reason and consecutive watchdog restarts", cmd_reset_reason},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);

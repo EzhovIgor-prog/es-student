@@ -14,9 +14,8 @@
 
 
 
-
+#define WATCHDOG_MAX_MS 8388
 #define TONE_PIN 20
-
 // счёт ШИМ тона: делитель приводит clk_sys к 1 МГц, счётчик считает микросекунды
 #define TONE_COUNT_HZ 1000000
 
@@ -82,6 +81,10 @@ static uint32_t stream_samples, stream_produced;
 static uint32_t stream_irq_index, stream_claimed, stream_claimed_number;
 
 static uint tone_slice;
+
+static bool watchdog_reset, watchdog_enabled;
+static uint32_t watchdog_restarts;
+
 
 
 // АЦП в непрерывном режиме с шагом 44,1 кГц, буфер АЦП с запросом DMA
@@ -497,8 +500,55 @@ bool platform_tone_set(uint32_t freq_hz)
 
 
 
+bool platform_watchdog_enable(uint32_t timeout_ms)
+{
+    if (timeout_ms == 0 || timeout_ms > WATCHDOG_MAX_MS)
+    {
+        return false;
+    }
+
+    // true — не считать, пока ядро остановлено отладчиком
+    watchdog_enable(timeout_ms, true);
+    watchdog_enabled = true;
+    return true;
+
+
+}
+
+void platform_watchdog_feed(void)
+{
+    if (watchdog_enabled) watchdog_update();
+}
+
+
+bool platform_watchdog_caused_reset(uint32_t *restarts)
+{
+    *restarts = watchdog_restarts;
+    return watchdog_reset;
+}
+
+
+
+
+
+
+
+
 void platform_init(void)
 {
+    watchdog_reset = watchdog_enable_caused_reboot();
+    if (watchdog_reset)
+    {
+        watchdog_hw->scratch[0]++;
+    }
+    else
+    {
+        watchdog_hw->scratch[0] = 0;
+    }
+    watchdog_restarts = watchdog_hw->scratch[0];
+    watchdog_enabled = false;
+
+
     stdio_init_all();
     
     gpio_init(LED_PIN);
