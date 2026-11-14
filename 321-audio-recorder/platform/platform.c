@@ -390,7 +390,7 @@ void platform_capture_get(platform_capture_t *capture)
 bool platform_stream_start(uint8_t bits)
 {
     if (platform_adc_busy() || (bits != 8 && bits != 16)) return false;
-    bool bits8 = bits == 8;
+    bool bits8 = (bits == 8);
     stream_samples = bits8 ? PLATFORM_STREAM_BYTES : PLATFORM_STREAM_BYTES / 2;
     adc_free_running(bits8);
     stream_overruns = stream_produced = stream_irq_index = 0;
