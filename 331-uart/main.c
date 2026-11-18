@@ -10,6 +10,7 @@
 #include "firmware.h"
 #include "platform/platform.h"
 #include "edge-task/edge-task.h"
+#include "uart-task/uart-task.h"
 
 
 #if PROFILING_ENABLED
@@ -25,6 +26,7 @@ typedef enum
     STOPWATCH_BUTTON,
     STOPWATCH_PI,
     STOPWATCH_EDGE,   
+    STOPWATCH_UART,
 } stopwatch_id_t;
 
 
@@ -46,6 +48,7 @@ int main()
     profiling_stopwatch_init(STOPWATCH_BUTTON, "button");
     profiling_stopwatch_init(STOPWATCH_PI, "pi");
     profiling_stopwatch_init(STOPWATCH_EDGE, "edge");   
+    profiling_stopwatch_init(STOPWATCH_UART, "uart");
     #endif
 
     LOG_INF("%s %s\n", FIRMWARE_NAME, FIRMWARE_VERSION);
@@ -95,6 +98,13 @@ int main()
 
         #if PROFILING_ENABLED
         profiling_stop(STOPWATCH_EDGE);
+        profiling_start(STOPWATCH_UART);
+        #endif
+        
+        uart_task_handle();
+
+        #if PROFILING_ENABLED
+        profiling_stop(STOPWATCH_UART);
         profiling_stop(STOPWATCH_LOOP);
         #endif
     }

@@ -17,6 +17,7 @@
 
 #include "platform/platform.h"
 #include "edge-task/edge-task.h"
+#include "uart-task/uart-task.h"
 
 
 
@@ -260,11 +261,162 @@ static void cmd_edge(const command_t *command)
     } 
     
         printf("error: usage edge pp|od\r\n");
-       
+
+}
+
+
+
+
+
+static void cmd_loop(const command_t *command)
+{
+
+    if (command->argc != 1)
+    {
+        printf("error: usage loop internal|pins\r\n");
+        return;
+    }
+  
+    const char str1[] = "internal";
     
+    if(strstr(command->argv[0], (const char *) str1))
+    {
+        platform_uart_loop_set(true);
+        
+        printf("loop: %s\r\n", str1);
+        
+        return;
+    }
+
+    const char str2[] = "pins";
+    
+    if(strstr(command->argv[0], (const char *) str2))
+    {
+        platform_uart_loop_set(false);
+        
+        printf("loop: %s\r\n", str2);
+        
+        return;
+    }   
+    
+    printf("error: usage loop internal|pins\r\n");
 
 
 }
+
+
+static void print_echo(const uint8_t *data, size_t size, uint32_t errors)
+{
+    
+    char  buf[size+1];
+    uint8_t i = 0;
+    
+    if(!size)
+    {
+        printf("error: pins loop\r\n");
+        return;
+    }
+
+
+    for(i = 0; i < size; i++)
+    {
+        buf[i] = (char) *(data + i);
+    }
+    
+    buf[i] = '\0';
+
+    
+    char  bufErr[15];
+    uint8_t pos = 0;
+
+        if(errors)
+        {
+            if(errors & PLATFORM_UART_FE)    
+            {
+            bufErr[pos++] = ' ';    
+            bufErr[pos++] = 'F';
+            bufErr[pos++] = 'E';
+            }
+
+            if(errors & PLATFORM_UART_PE)    
+            {
+            bufErr[pos++] = ' ';    
+            bufErr[pos++] = 'P';
+            bufErr[pos++] = 'E';
+            }
+
+        if(errors & PLATFORM_UART_BE)    
+            {
+            bufErr[pos++] = ' ';    
+            bufErr[pos++] = 'B';
+            bufErr[pos++] = 'E';
+            }
+
+            if(errors & PLATFORM_UART_OE)    
+            {
+            bufErr[pos++] = ' ';    
+            bufErr[pos++] = 'O';
+            bufErr[pos++] = 'E';
+            }       
+
+            
+        }
+        else
+        {
+        bufErr[pos++] = ' ';    
+        bufErr[pos++] = 'n';
+        bufErr[pos++] = 'o';
+        bufErr[pos++] = 'n';
+        bufErr[pos++] = 'e';   
+        }
+   
+        bufErr[pos++] = '\0';
+
+    printf("rx: %s err:%s\r\n", buf, bufErr);
+
+}
+
+
+
+static void cmd_echo(const command_t *command)
+{
+
+    if (command->argc != 1)
+    {
+        printf("error: usage echo <text>\r\n");
+        return;
+    }
+
+    uint8_t *ptr;
+    ptr = (uint8_t *) command->argv[0];
+    size_t cnt = 0;
+    
+    while(1)
+    {
+        if(isprint(*ptr++) == 0)  break;
+ 
+        if(++cnt > 32)
+        {
+            printf("error: text longer than 32\r\n");
+            return;
+        }
+    }
+
+        ptr = (uint8_t *) command->argv[0];
+
+     if(!uart_task_start(PLATFORM_UART0, PLATFORM_UART0,ptr,cnt, print_echo))
+     {
+
+            printf("error: uart is busy\r\n");
+            return;
+     }
+    
+     
+
+}
+
+
+
 
 
 const api_command_t api_commands[] = {
@@ -279,8 +431,9 @@ const api_command_t api_commands[] = {
     {"led_blink", "LED blinking", cmd_led_blink},
     {"led_period", "set period: led_period <period_ms>", cmd_led_period},
     {"button", "button state and press count", cmd_button},
-    {"edge", "rise and fall of the RC line: edge pp|od", cmd_edge },
-
+    {"edge", "rise and fall of the RC line: edge pp|od", cmd_edge},
+    {"loop", "UART0 loopback: loop internal|pins", cmd_loop},
+    {"echo", "text through UART0 and back: echo <text>", cmd_echo},
 };
 
 const uint32_t api_command_count = sizeof(api_commands) / sizeof(api_commands[0]);
