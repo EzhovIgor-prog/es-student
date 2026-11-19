@@ -588,7 +588,7 @@ static void cmd_text(const command_t *command)
             printf("error: uart is busy\r\n");
             return;
      }
-     
+
 }
 
 
@@ -657,7 +657,7 @@ static void print_block(const uint8_t *data, size_t size, uint32_t errors)
         int cmp = memcmp(p_blockTrBuf, data, 1);
 
 
-        printf("block %s: %u/64 %s err :%s\r\n", 
+        printf("block %s: %u/64 %s err: %s\r\n", 
                                                 (blockIrqmode)? "irq":"poll", 
                                                 (unsigned)size, 
                                                 (!cmp)? "match":"mismatch", 

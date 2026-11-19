@@ -3,62 +3,62 @@
 устройство: 2e8a:000a
 серийный номер: 504446729030CC1C
 порт: COM3
-начало: 2026-11-19T19:29:05
+начало: 2026-11-19T19:40:49
    0.000 --> 
-   0.545 --> help
-   0.547 <-- help
-   0.547 <-- help             list of commands
-   0.548 <-- info             device passport
-   0.548 <-- uptime           time since reset
-   0.548 <-- pi_start         start calculation: pi_start [<terms>]
-   0.548 <-- pi               calculation state or result
-   0.548 <-- profiling        stopwatch results
-   0.548 <-- profiling_reset  reset stopwatches
-   0.549 <-- led_enable       LED on
-   0.549 <-- led_disable      LED off
-   0.549 <-- led_blink        LED blinking
-   0.549 <-- led_period       set period: led_period <period_ms>
-   0.549 <-- button           button state and press count
-   0.549 <-- edge             rise and fall of the RC line: edge pp|od
-   0.549 <-- loop             UART0 loopback: loop internal|pins
-   0.550 <-- echo             text through UART0 and back: echo <text>
-   0.550 <-- link             text from UART0 to UART1 and back: link <text>
-   0.550 <-- baud_shift       shift UART1 baud rate: baud_shift <percent>
-   0.607 <-- text             32 characters from UART1 to UART0
-   0.607 <-- parity           parity of UART0 and UART1: parity <rx> <tx>
-   0.607 <-- block            64 bytes from UART1 to UART0: block irq|poll
-   1.595 --> info
-   1.656 <-- info
-   1.657 <-- name: es-uart
-   1.657 <-- version: 1.0.0
-   1.657 <-- project: 331-uart
-   1.657 <-- repo: https://github.com/EzhovIgor-prog/es-student
-   1.657 <-- board: pico
-   1.657 <-- serial: 504446729030CC1C
-   1.658 <-- chip: manufacturer 0x927, part 0x0002, revision 2
-   1.658 <-- pico-sdk: 2.3.0
-   2.644 --> loop pins
-   2.706 <-- loop pins
-   2.706 <-- loop: pins
-   3.204 --> parity none none
-   3.267 <-- parity none none
-   3.267 <-- parity uart0 none, uart1 none
-   3.766 --> baud_shift 0
-   3.828 <-- baud_shift 0
-   3.828 <-- baud_shift: uart1 115207 baud
-   4.323 --> block irq
-   4.384 <-- block irq
-   4.385 <-- block irq: 64/64 match err :none
-   4.878 --> block poll
-   4.939 <-- block poll
-   4.939 <-- block poll: 32/64 match err :OE
-   5.434 --> block irq
-   5.496 <-- block irq
-   5.496 <-- block irq: 64/64 match err :none
-   5.996 --> block poll
-   6.055 <-- block poll
-   6.056 <-- block poll: 32/64 match err :OE
-   6.555 --> block xx
-   6.616 <-- block xx
-   6.616 <-- error: usage block irq|poll
+   0.558 --> help
+   0.560 <-- help
+   0.560 <-- help             list of commands
+   0.560 <-- info             device passport
+   0.561 <-- uptime           time since reset
+   0.561 <-- pi_start         start calculation: pi_start [<terms>]
+   0.561 <-- pi               calculation state or result
+   0.561 <-- profiling        stopwatch results
+   0.561 <-- profiling_reset  reset stopwatches
+   0.561 <-- led_enable       LED on
+   0.562 <-- led_disable      LED off
+   0.562 <-- led_blink        LED blinking
+   0.562 <-- led_period       set period: led_period <period_ms>
+   0.562 <-- button           button state and press count
+   0.562 <-- edge             rise and fall of the RC line: edge pp|od
+   0.562 <-- loop             UART0 loopback: loop internal|pins
+   0.562 <-- echo             text through UART0 and back: echo <text>
+   0.562 <-- link             text from UART0 to UART1 and back: link <text>
+   0.562 <-- baud_shift       shift UART1 baud rate: baud_shift <percent>
+   0.620 <-- text             32 characters from UART1 to UART0
+   0.621 <-- parity           parity of UART0 and UART1: parity <rx> <tx>
+   0.621 <-- block            64 bytes from UART1 to UART0: block irq|poll
+   1.613 --> info
+   1.675 <-- info
+   1.676 <-- name: es-uart
+   1.676 <-- version: 1.0.0
+   1.676 <-- project: 331-uart
+   1.676 <-- repo: https://github.com/EzhovIgor-prog/es-student
+   1.676 <-- board: pico
+   1.676 <-- serial: 504446729030CC1C
+   1.676 <-- chip: manufacturer 0x927, part 0x0002, revision 2
+   1.677 <-- pico-sdk: 2.3.0
+   2.666 --> loop pins
+   2.729 <-- loop pins
+   2.729 <-- loop: pins
+   3.229 --> parity none none
+   3.291 <-- parity none none
+   3.292 <-- parity uart0 none, uart1 none
+   3.787 --> baud_shift 0
+   3.849 <-- baud_shift 0
+   3.849 <-- baud_shift: uart1 115207 baud
+   4.346 --> block irq
+   4.409 <-- block irq
+   4.409 <-- block irq: 64/64 match err: none
+   4.908 --> block poll
+   4.968 <-- block poll
+   4.969 <-- block poll: 32/64 match err: OE
+   5.465 --> block irq
+   5.528 <-- block irq
+   5.528 <-- block irq: 64/64 match err: none
+   6.025 --> block poll
+   6.087 <-- block poll
+   6.087 <-- block poll: 32/64 match err: OE
+   6.585 --> block xx
+   6.645 <-- block xx
+   6.645 <-- error: usage block irq|poll
 итог: отправлено кадров 11, принято строк 46
