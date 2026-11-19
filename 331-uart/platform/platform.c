@@ -1,9 +1,17 @@
 #include "platform/platform.h"
 
+
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/uart.h"
+#include "hardware/irq.h"
 
+
+// принятое обработчиком прерывания: блок длиннее очереди приёма
+#define RX_BUFFER_SIZE 128
+
+static volatile uint8_t rx_buffer[RX_BUFFER_SIZE];
+static volatile uint32_t rx_count;
 
 static const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 static const uint BUTTON_PIN = 15;
@@ -32,6 +40,20 @@ static const uint BUTTON_PIN = 15;
 
 // вывод, который через резистор 1 кОм ведёт линию RC-цепи
 #define LINE_PIN 22
+
+
+// обработчик UART0_IRQ: забирает из очереди приёма всё, что там есть
+static void on_uart0_rx(void)
+{
+    while (uart_is_readable(uart0))
+    {
+        uint8_t byte = uart_get_hw(uart0)->dr & 0xff;
+        if (rx_count < RX_BUFFER_SIZE)
+        {
+            rx_buffer[rx_count++] = byte;
+        }
+    }
+}
 
 
 static uart_inst_t *uart_of(platform_uart_t uart)
@@ -73,6 +95,12 @@ void platform_uart_clear(platform_uart_t uart)
 
     // запись в UARTECR сбрасывает признаки ошибок
     uart_get_hw(u)->rsr = 0;
+
+    if(uart == PLATFORM_UART0)
+    {
+        rx_count = 0;
+    }
+
 }
 
 
@@ -102,8 +130,21 @@ bool platform_uart_busy(platform_uart_t uart)
 // всё принятое с прошлой очистки, не больше size байтов
 size_t platform_uart_read(platform_uart_t uart, uint8_t *data, size_t size)
 {
+    
+
     uart_inst_t *u = uart_of(uart);
     size_t n = 0;
+    
+    if(uart == PLATFORM_UART0)
+    {
+        for(n = 0; n < rx_count; n++)
+        {
+        data[n]  = rx_buffer[n];
+        n++;   
+            
+        }
+    }
+
 
     while (uart_is_readable(u) && n < size)
     {
@@ -137,7 +178,11 @@ void platform_uart_parity_set(platform_uart_t uart, platform_parity_t parity)
     uart_set_format(uart_of(uart), 8, 1, parities[parity]);
 }
 
-
+void platform_uart_rx_irq_set(bool on)
+{
+    // прерывание по четырём байтам в очереди и по паузе на линии
+    uart_set_irqs_enabled(uart0, on, false);
+}
 
 
 
@@ -167,6 +212,11 @@ void platform_init(void)
 
     uart_init(uart1, UART_BAUD);
     platform_uart_loop_set(false);  //pins enable
+
+    irq_set_exclusive_handler(UART0_IRQ, on_uart0_rx);
+    irq_set_enabled(UART0_IRQ, true);
+
+
 }
 
 

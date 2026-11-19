@@ -20,8 +20,14 @@
 #include "uart-task/uart-task.h"
 
  // строка команды text: ровно 32 символа, столько же мест в очереди приёма
-    static const char text_line[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
-    static uint8_t string_len = 0; 
+static const char text_line[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+
+// блок команды block — 64 байта, вдвое длиннее очереди приёма
+#define BLOCK_SIZE 64
+static uint8_t blockTrBuf[BLOCK_SIZE];
+static uint8_t string_len = 0; 
+static uint8_t* p_blockTrBuf;
+static uint8_t blockIrqmode = 0;
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -643,6 +649,71 @@ static void cmd_parity(const command_t *command)
 }
 
 
+static void print_block(const uint8_t *data, size_t size, uint32_t errors)
+{
+        platform_uart_rx_irq_set(false);
+
+        int cmp = memcmp(p_blockTrBuf, data, 1);
+
+
+        printf("block %s: %u/64 %s err :%s\r\n", 
+                                                (blockIrqmode)? "irq":"poll", 
+                                                (unsigned)size, 
+                                                (!cmp)? "match":"mismatch", 
+                                                (!errors) ? "none" : 
+                                                (errors & PLATFORM_UART_FE)?"FE":
+                                                (errors & PLATFORM_UART_PE)?"PE":
+                                                (errors & PLATFORM_UART_BE)?"BE":"OE");
+}
+
+
+static void cmd_block(const command_t *command)
+{
+
+    if (command->argc != 1)
+    {
+        printf("error: usage block irq|poll\r\n");
+        return;
+    }
+  
+    
+
+    for(uint8_t i = 0; i < BLOCK_SIZE; i++)
+    {
+        blockTrBuf[i] = i;
+    }
+    
+    p_blockTrBuf = (uint8_t *)blockTrBuf; 
+
+    const char str1[] = "irq";
+    const char str2[] = "poll";
+
+    if(strstr(command->argv[0], (const char *) str1))
+    {
+        platform_uart_rx_irq_set(true);
+        blockIrqmode = 1;
+    }
+    else if((strstr(command->argv[0], (const char *) str2)))
+    {
+        platform_uart_rx_irq_set(false);
+        blockIrqmode = 0;
+    }   
+    else
+    {
+        printf("error: usage block irq|poll\r\n");
+        return;
+    }
+
+    
+        if(!uart_task_start(PLATFORM_UART1, PLATFORM_UART0, p_blockTrBuf, BLOCK_SIZE, print_block))
+        {
+                platform_uart_rx_irq_set(false);
+                printf("error: uart is busy\r\n");
+                return;
+        }
+
+
+}
 
 
 const api_command_t api_commands[] = {
@@ -664,7 +735,7 @@ const api_command_t api_commands[] = {
     {"baud_shift", "shift UART1 baud rate: baud_shift <percent>", cmd_baud_shift},
     {"text", "32 characters from UART1 to UART0", cmd_text},
     {"parity", "parity of UART0 and UART1: parity <rx> <tx>", cmd_parity},
-
+    {"block", "64 bytes from UART1 to UART0: block irq|poll", cmd_block},
 
 
 };
