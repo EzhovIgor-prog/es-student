@@ -33,6 +33,14 @@ typedef enum {
 #define PLATFORM_UART_OE 0x08
 
 
+typedef enum {
+    PLATFORM_PARITY_NONE,
+    PLATFORM_PARITY_EVEN,
+    PLATFORM_PARITY_ODD,
+    PLATFORM_PARITY_ERR,
+} platform_parity_t;
+
+
 // единица или ноль на линии; в режиме открытого стока единица —
 // отпущенная линия, которую поднимает внутренняя подтяжка
 void platform_line_set(platform_line_mode_t mode, bool high);
@@ -58,3 +66,9 @@ size_t platform_uart_read(platform_uart_t uart, uint8_t *data, size_t size);
 
 // признаки ошибок приёма с прошлой очистки
 uint32_t platform_uart_errors(platform_uart_t uart);
+
+// возвращает скорость, которая получилась после округления делителя
+uint32_t platform_uart_baud_set(platform_uart_t uart, uint32_t baud);
+
+void platform_uart_parity_set(platform_uart_t uart, platform_parity_t parity);
+

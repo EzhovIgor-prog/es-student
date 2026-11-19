@@ -12,6 +12,11 @@ static const uint BUTTON_PIN = 15;
 #define UART0_TX_PIN 0
 #define UART0_RX_PIN 1
 
+// выводы модуля UART1
+#define UART1_TX_PIN 8
+#define UART1_RX_PIN 9
+
+
 #define UART_BAUD 115200
 
 
@@ -41,13 +46,18 @@ void platform_uart_loop_set(bool internal)
     gpio_set_function(UART0_TX_PIN, function);
     gpio_set_function(UART0_RX_PIN, function);
 
+    gpio_set_function(UART1_TX_PIN, function);
+    gpio_set_function(UART1_RX_PIN, function);
+
     if (internal)
     {
         hw_set_bits(&uart_get_hw(uart0)->cr, UART_UARTCR_LBE_BITS);
+        hw_set_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
     }
     else
     {
         hw_clear_bits(&uart_get_hw(uart0)->cr, UART_UARTCR_LBE_BITS);
+        hw_clear_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
     }
 }
 
@@ -111,7 +121,21 @@ uint32_t platform_uart_errors(platform_uart_t uart)
 }
 
 
+uint32_t platform_uart_baud_set(platform_uart_t uart, uint32_t baud)
+{
+    return uart_set_baudrate(uart_of(uart), baud);
+}
 
+void platform_uart_parity_set(platform_uart_t uart, platform_parity_t parity)
+{
+    static const uart_parity_t parities[] = {
+        UART_PARITY_NONE,
+        UART_PARITY_EVEN,
+        UART_PARITY_ODD,
+    };
+
+    uart_set_format(uart_of(uart), 8, 1, parities[parity]);
+}
 
 
 
@@ -141,8 +165,10 @@ void platform_init(void)
     uart_init(uart0, UART_BAUD);
     platform_uart_loop_set(false);  //pins enable
 
-
+    uart_init(uart1, UART_BAUD);
+    platform_uart_loop_set(false);  //pins enable
 }
+
 
 void platform_led_set(bool on)
 {
