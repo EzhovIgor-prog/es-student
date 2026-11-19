@@ -588,6 +588,7 @@ static void cmd_text(const command_t *command)
             printf("error: uart is busy\r\n");
             return;
      }
+     
 }
 
 
