@@ -550,7 +550,7 @@ static void print_text(const uint8_t *data, size_t size, uint32_t errors)
     //    errors |= PLATFORM_UART_FE;
     //}
 
-        printf("text: %u chars %s err :%s\r\n", (unsigned)size, buf, 
+        printf("text: %u chars %s err: %s\r\n", (unsigned)size, buf, 
                                                                     (!errors) ? "none" : 
                                                                     (errors & PLATFORM_UART_FE)?"FE":
                                                                     (errors & PLATFORM_UART_PE)?"PE":
