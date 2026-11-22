@@ -64,17 +64,25 @@ void edge_task_handle(void)
 {
 
 
-     adc_data = platform_voltage_read();
-    
-
     switch(edge_state)
     {
-        case EDGE_IDLE:
+        case EDGE_IDLE: return;
         
-        break;
+        
+        adc_data = platform_voltage_read();
+
+            if((systime_us() - start_time) > TIMEOUT_US)
+            {
+                platform_line_set(set_mode, false); //discharge capacitor
+                edge_ok = false;
+                edge_state = EDGE_IDLE;
+                edge_callback(set_mode, edge_ok, rase_time, fall_time);
+            }
+
 
         case EDGE_DISCHARGE:
 
+            
             if(adc_data < EMPTY_V) 
             {
                 edge_state = EDGE_RISE;
@@ -87,6 +95,7 @@ void edge_task_handle(void)
 
         case EDGE_RISE:
         
+            adc_data = platform_voltage_read();
             if(adc_data > RISE_V) 
             {
                 edge_state = EDGE_CHARGE;
@@ -99,6 +108,7 @@ void edge_task_handle(void)
 
         case EDGE_CHARGE:
                 
+                adc_data = platform_voltage_read();
                 if(adc_data > FULL_V) 
                 {
                 edge_state = EDGE_FALL;
@@ -124,18 +134,9 @@ void edge_task_handle(void)
 
     }
 
-       
-            if((edge_state != EDGE_IDLE) && ((systime_us() - start_time) > TIMEOUT_US))
-            {
-                platform_line_set(set_mode, false); //discharge capacitor
-                edge_ok = false;
-                edge_callback(set_mode, edge_ok, rase_time, fall_time);
-            }
-        
-    
-
-
     
 }
+
+bool edge_task_busy(void) { return edge_state != EDGE_IDLE; }
 
 

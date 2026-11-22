@@ -5,6 +5,8 @@
 #include "hardware/adc.h"
 #include "hardware/uart.h"
 #include "hardware/irq.h"
+#include "hardware/dma.h"
+#include "hardware/sync.h"
 
 
 // принятое обработчиком прерывания: блок длиннее очереди приёма
@@ -16,6 +18,16 @@ static volatile uint32_t rx_count;
 static const uint LED_PIN = PICO_DEFAULT_LED_PIN;
 static const uint BUTTON_PIN = 15;
 
+// кто сейчас работает с АЦП; меняют и функции, и обработчики прерываний
+typedef enum {
+    ADC_FREE,
+    ADC_CAPTURE,
+    ADC_BLOCK,
+    ADC_STREAM,
+} adc_user_t;
+
+static volatile adc_user_t adc_user;
+
 // выводы модуля UART0
 #define UART0_TX_PIN 0
 #define UART0_RX_PIN 1
@@ -25,7 +37,7 @@ static const uint BUTTON_PIN = 15;
 #define UART1_RX_PIN 9
 
 
-#define UART_BAUD 115200
+
 
 
 
@@ -40,6 +52,97 @@ static const uint BUTTON_PIN = 15;
 
 // вывод, который через резистор 1 кОм ведёт линию RC-цепи
 #define LINE_PIN 22
+
+
+static int block_channel;
+static uint16_t block_samples[PLATFORM_BLOCK_MAX];
+static uint32_t block_start_us;
+static volatile uint32_t block_end_us;
+static volatile bool block_ready;
+
+
+// АЦП в непрерывном режиме с шагом 44,1 кГц, буфер АЦП с запросом DMA
+// на каждый отсчёт
+static void adc_free_running(bool bits8)
+{
+    adc_select_input(ADC_CHANNEL);
+    adc_fifo_setup(true, true, 1, false, bits8);
+    adc_set_clkdiv(0);
+}
+
+static void adc_one_shot(void)
+{
+    adc_run(false);
+    adc_fifo_drain();
+    adc_fifo_setup(false, false, 0, false, false);
+    adc_set_clkdiv(0);
+}
+
+// обработчик прерывания DMA_IRQ_1: блок захвачен
+static void on_block_done(void)
+{
+    dma_channel_acknowledge_irq1(block_channel);
+    block_end_us = time_us_32();
+    adc_one_shot();
+    block_ready = true;
+    adc_user = ADC_FREE;
+}
+
+bool platform_block_start(uint32_t count)
+{
+    if (adc_user != ADC_FREE || count == 0 || count > PLATFORM_BLOCK_MAX)
+    {
+        return false;
+    }
+
+    adc_free_running(false);
+
+    // 16-битные передачи из одного адреса в растущий, по запросу АЦП
+    dma_channel_config cfg = dma_channel_get_default_config(block_channel);
+    channel_config_set_transfer_data_size(&cfg, DMA_SIZE_16);
+    channel_config_set_read_increment(&cfg, false);
+    channel_config_set_write_increment(&cfg, true);
+    channel_config_set_dreq(&cfg, DREQ_ADC);
+
+    block_ready = false;
+    adc_user = ADC_BLOCK;
+
+    // куда, откуда, сколько; true — запустить сразу
+    dma_channel_configure(block_channel, &cfg, block_samples, &adc_hw->fifo, count, true);
+    block_start_us = time_us_32();
+    adc_run(true);
+
+    return true;
+}
+
+
+bool platform_block_done(void)
+{
+    if(block_ready && (adc_user == ADC_FREE)) return true;
+
+    return false;
+}
+
+void platform_erase_fDone(void)
+{
+    block_ready = false;
+
+}
+
+const uint16_t *platform_block_samples(void)
+{
+    return (uint16_t *) block_samples;
+}
+
+// время захвата блока, от запуска АЦП до последнего отсчёта
+uint32_t platform_block_time_us(void)
+{
+    return block_end_us - block_start_us;
+}
+
+
+
+
 
 
 // обработчик UART0_IRQ: забирает из очереди приёма всё, что там есть
@@ -68,18 +171,18 @@ void platform_uart_loop_set(bool internal)
     gpio_set_function(UART0_TX_PIN, function);
     gpio_set_function(UART0_RX_PIN, function);
 
-    gpio_set_function(UART1_TX_PIN, function);
-    gpio_set_function(UART1_RX_PIN, function);
 
+    gpio_set_function(UART1_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART1_RX_PIN, GPIO_FUNC_UART);
+    hw_clear_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
+   
     if (internal)
     {
         hw_set_bits(&uart_get_hw(uart0)->cr, UART_UARTCR_LBE_BITS);
-        hw_set_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
     }
     else
     {
         hw_clear_bits(&uart_get_hw(uart0)->cr, UART_UARTCR_LBE_BITS);
-        hw_clear_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
     }
 }
 
@@ -87,6 +190,8 @@ void platform_uart_loop_set(bool internal)
 void platform_uart_clear(platform_uart_t uart)
 {
     uart_inst_t *u = uart_of(uart);
+
+    uint32_t irq_state = save_and_disable_interrupts();
 
     while (uart_is_readable(u)) //проверить наличие данных в буфере
     {
@@ -100,6 +205,7 @@ void platform_uart_clear(platform_uart_t uart)
     {
         rx_count = 0;
     }
+    restore_interrupts(irq_state);
 
 }
 
@@ -130,9 +236,10 @@ bool platform_uart_busy(platform_uart_t uart)
 // всё принятое с прошлой очистки, не больше size байтов
 size_t platform_uart_read(platform_uart_t uart, uint8_t *data, size_t size)
 {
-    
-
     uart_inst_t *u = uart_of(uart);
+
+    uint32_t irq_state = save_and_disable_interrupts();
+
     size_t n = 0;
     
     if(uart == PLATFORM_UART0)
@@ -150,6 +257,8 @@ size_t platform_uart_read(platform_uart_t uart, uint8_t *data, size_t size)
     {
         data[n++] = uart_get_hw(u)->dr & 0xff;
     }
+
+    restore_interrupts(irq_state);
 
     return n;
 }
@@ -207,16 +316,24 @@ void platform_init(void)
     platform_line_set(PLATFORM_LINE_PUSH_PULL, false);
 
     // делитель, формат 8N1, очереди, включение модуля
-    uart_init(uart0, UART_BAUD);
+    uart_init(uart0,  PLATFORM_UART_BAUD);
     platform_uart_loop_set(false);  //pins enable
 
-    uart_init(uart1, UART_BAUD);
-    platform_uart_loop_set(false);  //pins enable
+    uart_init(uart1,  PLATFORM_UART_BAUD);
+    
+    gpio_set_function(UART1_TX_PIN, GPIO_FUNC_UART);
+    gpio_set_function(UART1_RX_PIN, GPIO_FUNC_UART);
+    hw_clear_bits(&uart_get_hw(uart1)->cr, UART_UARTCR_LBE_BITS);
+
 
     irq_set_exclusive_handler(UART0_IRQ, on_uart0_rx);
     irq_set_enabled(UART0_IRQ, true);
 
-
+    // канал блока сообщает о конце через DMA_IRQ_1
+    block_channel = dma_claim_unused_channel(true);
+    dma_channel_set_irq1_enabled(block_channel, true);
+    irq_set_exclusive_handler(DMA_IRQ_1, on_block_done);
+    irq_set_enabled(DMA_IRQ_1, true);
 }
 
 

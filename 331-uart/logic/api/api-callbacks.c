@@ -14,7 +14,7 @@
 #include "pi-task/pi-task.h"
 #include "systime/systime.h"
 #include "firmware.h"
-
+#include "block-task/block-task.h"
 #include "platform/platform.h"
 #include "edge-task/edge-task.h"
 #include "uart-task/uart-task.h"
@@ -22,12 +22,39 @@
  // строка команды text: ровно 32 символа, столько же мест в очереди приёма
 static const char text_line[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
+
+#define SCOPE_SAMPLES PLATFORM_BLOCK_MAX
+#define SCOPE_BAUD_MIN 9600
+#define SCOPE_TEXT_MAX 4
+#define SCOPE_PRETRIGGER_US 24u
+
+
+
 // блок команды block — 64 байта, вдвое длиннее очереди приёма
 #define BLOCK_SIZE 64
 static uint8_t blockTrBuf[BLOCK_SIZE];
+
 static uint8_t string_len = 0; 
+
 static uint8_t* p_blockTrBuf;
+
 static uint8_t blockIrqmode = 0;
+
+
+volatile uint32_t scope_received_errors;
+static platform_parity_t configured_parities[2];
+static bool internal_loop;
+
+static struct {
+    bool active, tx_started, rx_done;
+    uint32_t baud, errors;
+    uint64_t trigger_us;
+    uint8_t text[SCOPE_TEXT_MAX], received[SCOPE_TEXT_MAX];
+    size_t text_size, received_size;
+    const uint16_t *samples;
+    uint32_t sample_count;
+} scope;
+
 
 // Число без знака из десятичной записи. false — в записи не только цифры
 // или число не помещается в uint32_t.
@@ -312,6 +339,17 @@ static void cmd_loop(const command_t *command)
 
 }
 
+static void print_errors(uint32_t errors)
+{
+    printf(" err: ");
+    if (!errors) printf("none");
+    if (errors & PLATFORM_UART_FE) printf("FE");
+    if (errors & PLATFORM_UART_PE) printf("PE");
+    if (errors & PLATFORM_UART_BE) printf("BE");
+    if (errors & PLATFORM_UART_OE) printf("OE");
+    printf("\r\n");
+}
+
 
 static void print_echo(const uint8_t *data, size_t size, uint32_t errors)
 {
@@ -333,11 +371,8 @@ static void print_echo(const uint8_t *data, size_t size, uint32_t errors)
     
     buf[i] = '\0';
     
-       printf("rx: %s err: %s\r\n", buf, 
-                                        (!errors) ? "none" : 
-                                        (errors & PLATFORM_UART_FE)?"FE":
-                                        (errors & PLATFORM_UART_PE)?"PE":
-                                        (errors & PLATFORM_UART_BE)?"BE":"OE");
+       printf("rx: %s ", buf);
+       print_errors(errors);
 
 }
 
@@ -399,13 +434,9 @@ static void print_link_back(const uint8_t *data, size_t size, uint32_t errors)
     buf[i] = '\0';
 
     
-       printf("1->0: %s err: %s\r\n", buf, 
-                                        (!errors) ? "none" : 
-                                        (errors & PLATFORM_UART_FE)?"FE":
-                                        (errors & PLATFORM_UART_PE)?"PE":
-                                        (errors & PLATFORM_UART_BE)?"BE":"OE");
+    printf("1->0: %s", buf);
 
-
+    print_errors(errors);
 
 }
 
@@ -431,12 +462,9 @@ static void print_link_forth(const uint8_t *data, size_t size, uint32_t errors)
     }
         buf[i] = '\0';
 
-       printf("0->1: %s err: %s\r\n", buf, 
-                                        (!errors) ? "none" : 
-                                        (errors & PLATFORM_UART_FE)?"FE":
-                                        (errors & PLATFORM_UART_PE)?"PE":
-                                        (errors & PLATFORM_UART_BE)?"BE":"OE");
+       printf("0->1: %s", buf);
 
+       print_errors(errors);
 
      if(!uart_task_start(PLATFORM_UART1, PLATFORM_UART0, bufHex, size, print_link_back))
      {
@@ -551,16 +579,10 @@ static void print_text(const uint8_t *data, size_t size, uint32_t errors)
     
     buf[i] = '\0';
 
-    //if(string_len != size)
-    //{
-    //    errors |= PLATFORM_UART_FE;
-    //}
+   
+    printf("text: %u chars %s ", (unsigned)size, buf);
 
-        printf("text: %u chars %s err: %s\r\n", (unsigned)size, buf, 
-                                                                    (!errors) ? "none" : 
-                                                                    (errors & PLATFORM_UART_FE)?"FE":
-                                                                    (errors & PLATFORM_UART_PE)?"PE":
-                                                                    (errors & PLATFORM_UART_BE)?"BE":"OE");
+    print_errors(errors);                                                         
 }
 
 
@@ -588,7 +610,6 @@ static void cmd_text(const command_t *command)
             printf("error: uart is busy\r\n");
             return;
      }
-
 }
 
 
@@ -657,14 +678,11 @@ static void print_block(const uint8_t *data, size_t size, uint32_t errors)
         int cmp = memcmp(p_blockTrBuf, data, 1);
 
 
-        printf("block %s: %u/64 %s, err: %s\r\n", 
-                                                (blockIrqmode)? "irq":"poll", 
-                                                (unsigned)size, 
-                                                (!cmp)? "match":"mismatch", 
-                                                (!errors) ? "none" : 
-                                                (errors & PLATFORM_UART_FE)?"FE":
-                                                (errors & PLATFORM_UART_PE)?"PE":
-                                                (errors & PLATFORM_UART_BE)?"BE":"OE");
+        printf("block %s: %u/64 %s", (blockIrqmode)? "irq":"poll", 
+                                     (unsigned)size, 
+                                     (!cmp)? "match":"mismatch");
+
+        print_errors(errors);                                        
 }
 
 
@@ -713,8 +731,141 @@ static void cmd_block(const command_t *command)
                 return;
         }
 
+}
+
+static bool check_uart_idle(void)
+{
+    if (!scope.active && !uart_task_busy()) return true;
+    printf("error: uart is busy\r\n");
+    return false;
+}
+
+
+
+static void print_bytes(const uint8_t *data, size_t size)
+{
+    if (!size)
+    {
+        printf("(empty)");
+        return;
+    }
+    char printable[UART_TASK_MAX + 1];
+    for (size_t i = 0; i < size; ++i)
+        printable[i] = isprint(data[i]) ? (char)data[i] : '.';
+    printable[size] = '\0';
+    printf("%s", printable);
+}
+
+static void print_uart(const char *prefix, const uint8_t *data, size_t size, uint32_t errors)
+{
+    printf("%s", prefix);
+    print_bytes(data, size);
+    printf(" ");
+    print_errors(errors);
+}
+
+
+static void print_scope_rx(const uint8_t *data, size_t size, uint32_t errors)
+{
+    scope.received_size = size < sizeof scope.received ? size : sizeof scope.received;
+    memcpy(scope.received, data, scope.received_size);
+    scope.errors = errors;
+    scope.rx_done = true;
+}
+
+static void save_scope_block(const uint16_t *samples, uint32_t count, uint32_t elapsed_us)
+{
+    (void)elapsed_us;
+    scope.samples = samples;
+    scope.sample_count = count;
+}
+
+static void restore_uart_after_scope(void)
+{
+    platform_uart_baud_set(PLATFORM_UART0, PLATFORM_UART_BAUD);
+    platform_uart_baud_set(PLATFORM_UART1, PLATFORM_UART_BAUD);
+    platform_uart_parity_set(PLATFORM_UART0, configured_parities[PLATFORM_UART0]);
+    platform_uart_parity_set(PLATFORM_UART1, configured_parities[PLATFORM_UART1]);
+    platform_uart_loop_set(internal_loop);
+}
+
+void api_scope_handle(void)
+{
+    if (!scope.active) return;
+    if (!scope.tx_started && systime_us() >= scope.trigger_us)
+    {
+        scope.tx_started = uart_task_start(PLATFORM_UART0, PLATFORM_UART1, scope.text, scope.text_size, print_scope_rx);
+    }
+    
+    if (!scope.samples || !scope.rx_done) return;
+
+    restore_uart_after_scope();
+    
+    printf("scope: %u samples, %u Hz, %u baud, uart1 ", (unsigned)scope.sample_count,
+           (unsigned)PLATFORM_SAMPLE_RATE_HZ, (unsigned)scope.baud);
+    
+           print_uart("", scope.received, scope.received_size, scope.errors);
+   
+    for (uint32_t offset = 0; offset < scope.sample_count; offset += 16)
+    {
+        char line[16 * 5 + 1];
+        size_t length = 0;
+        for (uint32_t i = 0; i < 16 && offset + i < scope.sample_count; ++i)
+        {
+            length += (size_t)snprintf(line + length, sizeof line - length,
+                                       i ? " %u" : "%u", (unsigned)scope.samples[offset + i]);
+        }
+        printf("%s\r\n", line);
+    }
+    printf("scope: end\r\n");
+    scope.active = false;
+}
+
+static void cmd_scope(const command_t *command)
+{
+    uint32_t baud;
+    if (command->argc != 2 || 
+        !parse_u32(command->argv[0], &baud) ||
+        baud < SCOPE_BAUD_MIN || 
+        baud > PLATFORM_UART_BAUD ||
+        strlen(command->argv[1]) > SCOPE_TEXT_MAX)
+    {
+        printf("error: usage scope <baud> <text>\r\n");
+        return;
+    }
+
+    if (!check_uart_idle()) return;
+
+    if (edge_task_busy())
+    {
+        printf("error: adc busy\r\n");
+        return;
+    }
+
+    platform_uart_loop_set(false);
+    platform_uart_baud_set(PLATFORM_UART0, baud);
+    platform_uart_baud_set(PLATFORM_UART1, baud);
+    platform_uart_parity_set(PLATFORM_UART0, PLATFORM_PARITY_NONE);
+    platform_uart_parity_set(PLATFORM_UART1, PLATFORM_PARITY_NONE);
+
+    if (!block_task_start(PLATFORM_BLOCK_MAX, save_scope_block))
+    {
+        restore_uart_after_scope();
+        printf("error: adc busy\r\n");
+        return;
+    }
+
+    scope.active = true;
+    scope.tx_started = scope.rx_done = false;
+    scope.samples = NULL;
+    scope.baud = baud;
+    scope.text_size = strlen(command->argv[1]);
+    memcpy(scope.text, command->argv[1], scope.text_size);
+    scope.trigger_us = systime_us() + SCOPE_PRETRIGGER_US;
 
 }
+
+
 
 
 const api_command_t api_commands[] = {
@@ -737,7 +888,7 @@ const api_command_t api_commands[] = {
     {"text", "32 characters from UART1 to UART0", cmd_text},
     {"parity", "parity of UART0 and UART1: parity <rx> <tx>", cmd_parity},
     {"block", "64 bytes from UART1 to UART0: block irq|poll", cmd_block},
-
+    {"scope", "UART0 line on ADC: scope <baud> <text>", cmd_scope},
 
 };
 

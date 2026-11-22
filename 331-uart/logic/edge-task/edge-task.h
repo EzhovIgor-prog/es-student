@@ -17,4 +17,4 @@ bool edge_task_start(platform_line_mode_t mode, edge_task_callback_t on_done);
 // вызывается на каждой итерации суперцикла, не ждёт
 void edge_task_handle(void);
 
-
+bool edge_task_busy(void);
