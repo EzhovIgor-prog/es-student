@@ -2,10 +2,9 @@
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 #include "hardware/spi.h"
+#include "pico/multicore.h"
 
 
-#define BUS_BAUD  100000
-#define I2C_TIMEOUT_US 10000
 
 static const uint spi_cs_pins[PLATFORM_SPI_CS_COUNT] = {16, 5};
 
@@ -82,3 +81,31 @@ uint8_t platform_spi_read(uint8_t cs, uint8_t command, uint8_t pause_us)
     gpio_put(spi_cs_pins[cs], 1);
     return value;
 }
+
+
+void platform_start_core1(void (*entry)(void))
+{
+    multicore_launch_core1(entry);
+}
+
+void platform_slave_init(void)
+{
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+}
+
+void platform_led_set(bool on)
+{
+    gpio_put(PICO_DEFAULT_LED_PIN, on);
+}
+
+uint32_t platform_time_ms(void)
+{
+    return to_ms_since_boot(get_absolute_time());
+}
+
+
+
+
