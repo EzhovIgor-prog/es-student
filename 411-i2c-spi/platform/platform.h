@@ -13,6 +13,7 @@ enum
     I2C_TIMEOUT_US = 10000,
     PLATFORM_SPI_CS_COUNT = 2,
     SPI_CS_HOLD_US = 2,
+    SPI_SLAVE_CS = 13,
 };
 
 void platform_master_init(void);
@@ -23,7 +24,8 @@ uint8_t platform_spi_read(uint8_t cs, uint8_t command, uint8_t pause_us);
 void platform_start_core1(void (*entry)(void));
 void platform_led_set(bool on);
 
-
-
-
+void platform_spi_slave_reset(void);
+bool platform_spi_slave_selected(void);
+bool platform_spi_slave_receive(uint8_t *byte);
+void platform_spi_slave_reply(uint8_t byte);
 void platform_slave_init(uint8_t address, platform_register_read_t read_register, platform_register_write_t write_register);
